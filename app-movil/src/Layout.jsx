@@ -9,7 +9,9 @@ import LoginScreen from './screens/LoginScreen';
 const Drawer = createDrawerNavigator();
 
 export default function Layout() {
+  console.log('Rendering Layout component');
   const { isInitiated } = useSession();
+  console.log('isInitiated:', isInitiated);
 
   if (!isInitiated) {
     return <LoginScreen />;

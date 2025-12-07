@@ -1,4 +1,4 @@
-const API_URL = 'http://10.200.33.205:3000/api';
+import { API_URL } from './config';
 
 const userService = {
   async getUsers(token) {

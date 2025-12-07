@@ -2,7 +2,7 @@ import 'react-native-gesture-handler';
 import 'react-native-reanimated';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { NavigationContainer } from '@react-navigation/native';
-import { SessionProvider } from './src/context/SessionContext';
+import { SessionProvider } from './src/components/Session';
 import Layout from './src/Layout';
 import { StyleSheet } from 'react-native';
 
