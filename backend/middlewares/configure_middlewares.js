@@ -3,7 +3,7 @@ import { controllers } from '../controllers/controllers.js';
 import { errorHandlerMiddleware } from './error_handler_middleware.js';
 import { logMiddleware } from './log_middleware.js';
 import { authorizationMiddleware } from './authorization_middleware.js';
-import { corsModdleware } from './cors_middleware.js';
+import { corsMiddleware } from './cors_middleware.js';
 import config from '../config.js';
 
 export default function configureMiddlewares(router) {
@@ -11,7 +11,7 @@ export default function configureMiddlewares(router) {
   router.use(logMiddleware);
   router.use(authorizationMiddleware);
   if (config.cors) {
-    router.use(corsModdleware);
+    router.use(corsMiddleware);
   }
   
   controllers(router);
