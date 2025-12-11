@@ -40,17 +40,17 @@ router.get('/ping', (req, res) => {
   res.json({ message: 'Backend funcionando!' });
 });
 
-// 🔑 Ruta de login
+// 🔑 Ruta de login con username
 router.post('/login', async (req, res) => {
-  const { email, password } = req.body;
+  const { username, password } = req.body;
 
   try {
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ username });
     if (!user) {
       return res.status(401).json({ message: 'Credenciales inválidas' });
     }
 
-    // Usar el campo correcto: hashedPassword
+    // Comparar contra hashedPassword
     const match = await bcrypt.compare(password, user.hashedPassword);
     if (!match) {
       return res.status(401).json({ message: 'Credenciales inválidas' });
