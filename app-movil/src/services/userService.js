@@ -1,6 +1,35 @@
 import { API_URL } from './config';
 
 const userService = {
+  // 🔑 Login
+  async login(credentials) {
+    try {
+      const response = await fetch(`${API_URL}/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(credentials),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || `Error ${response.status}`);
+      }
+
+      const data = await response.json();
+      return {
+        success: true,
+        token: data.token,
+        role: data.role,
+      };
+    } catch (error) {
+      console.log('Error en login:', error);
+      return {
+        success: false,
+        error: error.message || 'Error al iniciar sesión',
+      };
+    }
+  },
+
   async getUsers(token) {
     try {
       const response = await fetch(`${API_URL}/user`, {
@@ -104,9 +133,7 @@ const userService = {
         throw new Error(errorData.message || `Error ${response.status}`);
       }
 
-      return {
-        success: true,
-      };
+      return { success: true };
     } catch (error) {
       console.log('Error deleting user:', error);
       return {
