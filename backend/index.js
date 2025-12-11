@@ -3,7 +3,8 @@ import config from './config.js';
 import mongoose from 'mongoose';
 import configureDependencies from './configure_dpendencies.js';
 import configureMiddlewares from './middlewares/configure_middlewares.js';
-import corsMiddleware from './middlewares/cors_middleware.js'; // ✅ usar export default
+import { corsMiddleware } from './middlewares/cors_middleware.js';
+
 
 // Validar jwtKey
 if (!config.jwtKey) {
