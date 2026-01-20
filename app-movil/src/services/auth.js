@@ -1,31 +1,33 @@
-// Configurar con tu URL de backend
-import { API_URL } from './config';
+import { postJson } from '../libs/api.js';
 
 export const loginService = {
   async login(username, password) {
     try {
-      const response = await fetch(`${API_URL}/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Credenciales inválidas');
+      const response = await postJson('/login', { username, password });
+      
+      if (response && response.token) {
+        return {
+          success: true,
+          token: response.token,
+          user: response.user || {
+            uuid: response.user?.uuid,
+            username: response.user?.username,
+            fullName: response.user?.fullName,
+            roles: response.user?.roles || [],
+          },
+        };
       }
-
-      const data = await response.json();
+      
       return {
-        success: true,
-        token: data.token,
-        user: data.user,
+        success: false,
+        error: response?.message || 'Credenciales inválidas',
       };
     } catch (error) {
       return {
         success: false,
-        error: error.message,
+        error: error.message || 'Error en la conexión con el servidor',
       };
     }
   },
 };
+
