@@ -25,7 +25,7 @@ export class LoginService {
 
     const token = jwt.sign(
       {
-        userId: user.id,
+        userId: user._id,
         username: user.username,
         fullName: user.fullName,
         roles: user.roles,
