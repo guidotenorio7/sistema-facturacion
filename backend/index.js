@@ -5,6 +5,7 @@ import configureDependencies from './configure_dpendencies.js';
 import configureMiddlewares from './middlewares/configure_middlewares.js';
 import { corsMiddleware } from './middlewares/cors_middleware.js';
 import { getDependency } from './libs/dependencies.js';
+import { controllers } from './controllers/controllers.js';
 
 // Validar jwtKey
 if (!config.jwtKey) {
@@ -55,6 +56,9 @@ router.post('/login', async (req, res) => {
     res.status(500).json({ message: 'Error interno del servidor' });
   }
 });
+
+// Registrar controladores (usuarios, facturación, etc)
+controllers(router);
 
 // Levantar servidor
 app.listen(config.port, () => {

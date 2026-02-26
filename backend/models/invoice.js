@@ -6,9 +6,14 @@ const invoiceSchema = new mongoose.Schema({
     unique: true,
     required: true,
   },
+  invoiceNumber: {
+    type: String,
+    required: true,
+    default: () => `INV-${Date.now()}`,
+  },
   localId: {
     type: Number,
-    required: true,
+    default: 0,
   },
   createdBy: {
     type: String,
@@ -16,27 +21,38 @@ const invoiceSchema = new mongoose.Schema({
   },
   pointOfSale: {
     type: Number,
-    required: true,
+    default: 1,
   },
   cbteTipo: {
     // Tipo de comprobante (AFIP): 1=Factura A, 6=Factura B, etc.
     type: Number,
-    required: true,
+    default: 6,
   },
   docTipo: {
-    // Tipo de documento cliente: 80=CUIT, 86=CUIL, etc.
+    // Tipo de documento cliente: 80=CUIT, 86=CUIL, 99=Consumidor Final, etc.
     type: Number,
-    required: true,
+    default: 99,
   },
   docNro: {
     type: String,
-    required: true,
+    default: '0',
   },
   clientName: {
     type: String,
     required: true,
   },
-  clientEmail: String,
+  clientEmail: {
+    type: String,
+    default: '',
+  },
+  description: {
+    type: String,
+    default: '',
+  },
+  quantity: {
+    type: Number,
+    default: 1,
+  },
   items: [
     {
       description: String,
@@ -47,7 +63,7 @@ const invoiceSchema = new mongoose.Schema({
   ],
   subtotal: {
     type: Number,
-    required: true,
+    default: 0,
   },
   taxAmount: {
     type: Number,
