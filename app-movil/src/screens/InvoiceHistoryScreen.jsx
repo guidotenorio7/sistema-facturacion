@@ -1,8 +1,7 @@
-import { View, Text, FlatList, Pressable, StyleSheet, RefreshControl, Alert } from 'react-native';
+import { View, Text, FlatList, Pressable, StyleSheet, RefreshControl, Alert, SectionList } from 'react-native';
 import { useState, useCallback, useEffect } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { useSession } from '../components/Session';
-import Screen from '../components/Screen';
 import facturacionService from '../services/facturacionService';
 
 export default function InvoiceHistoryScreen() {
@@ -144,8 +143,9 @@ export default function InvoiceHistoryScreen() {
     </View>
   );
 
-  return (
-    <View style={styles.container}>
+  // Componente para el header del FlatList
+  const renderHeader = () => (
+    <View>
       <Text style={styles.title}>Historial de Facturas</Text>
 
       {invoices.length > 0 && (
@@ -164,28 +164,29 @@ export default function InvoiceHistoryScreen() {
           </View>
         </View>
       )}
-
-      {loading ? (
-        <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>Cargando facturas...</Text>
-        </View>
-      ) : (
-        <FlatList
-          data={invoices}
-          renderItem={renderInvoiceItem}
-          keyExtractor={(item) => item.uuid || item.id?.toString() || Math.random().toString()}
-          ListEmptyComponent={renderEmpty}
-          contentContainerStyle={styles.listContent}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={onRefresh}
-              colors={['#4CAF50']}
-            />
-          }
-        />
-      )}
     </View>
+  );
+
+  return (
+    <FlatList
+      style={styles.container}
+      data={invoices}
+      renderItem={renderInvoiceItem}
+      keyExtractor={(item) => item.uuid || `invoice-${item.id || Math.random()}`}
+      ListHeaderComponent={renderHeader}
+      ListEmptyComponent={renderEmpty}
+      contentContainerStyle={[
+        styles.listContent,
+        invoices.length === 0 && styles.emptyListContent,
+      ]}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          colors={['#4CAF50']}
+        />
+      }
+    />
   );
 }
 
@@ -328,5 +329,8 @@ const styles = StyleSheet.create({
   loadingText: {
     fontSize: 16,
     color: '#666',
+  },
+  emptyListContent: {
+    flexGrow: 1,
   },
 });

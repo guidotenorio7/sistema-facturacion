@@ -9,7 +9,6 @@ import {
   StyleSheet,
 } from 'react-native';
 import { useState, useEffect } from 'react';
-import Screen from '../components/Screen';
 import UserCard from '../components/UserCard';
 import UserForm from '../components/UserForm';
 import { useSession } from '../components/Session';
@@ -114,30 +113,14 @@ export default function UsersScreen() {
   );
 
   const renderHeader = () => (
-    <View style={styles.header}>
-      <Text style={styles.headerTitle}>Gestor de Usuarios</Text>
-      <Text style={styles.headerSubtitle}>
-        Total: {users.length} usuario{users.length !== 1 ? 's' : ''}
-      </Text>
-    </View>
-  );
-
-  const renderSeparator = () => <View style={styles.separator} />;
-
-  if (loading) {
-    return (
-      <Screen title="Usuarios">
-        <View style={styles.centerContainer}>
-          <ActivityIndicator size="large" color="#007AFF" />
-          <Text style={styles.loadingText}>Cargando usuarios...</Text>
+    <View>
+      <View style={styles.headerContainer}>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Gestor de Usuarios</Text>
+          <Text style={styles.headerSubtitle}>
+            Total: {users.length} usuario{users.length !== 1 ? 's' : ''}
+          </Text>
         </View>
-      </Screen>
-    );
-  }
-
-  return (
-    <Screen title="Usuarios">
-      <View style={styles.container}>
         <Pressable
           style={styles.addButton}
           onPress={() => {
@@ -145,44 +128,57 @@ export default function UsersScreen() {
             setShowForm(true);
           }}
         >
-          <Text style={styles.addButtonText}>+ Nuevo Usuario</Text>
+          <Text style={styles.addButtonText}>+ Nuevo</Text>
         </Pressable>
+      </View>
+    </View>
+  );
 
-        {users.length === 0 ? (
+  const renderSeparator = () => <View style={styles.separator} />;
+
+  if (loading) {
+    return (
+      <View style={styles.centerContainer}>
+        <ActivityIndicator size="large" color="#007AFF" />
+        <Text style={styles.loadingText}>Cargando usuarios...</Text>
+      </View>
+    );
+  }
+
+  return (
+    <>
+      <FlatList
+        style={styles.container}
+        data={users}
+        renderItem={renderUserCard}
+        keyExtractor={(item) => item.uuid || `user-${Math.random()}`}
+        ItemSeparatorComponent={renderSeparator}
+        ListHeaderComponent={renderHeader}
+        ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyText}>No hay usuarios registrados</Text>
           </View>
-        ) : (
-          <FlatList
-            data={users}
-            renderItem={renderUserCard}
-            keyExtractor={(item) => item.uuid}
-            ItemSeparatorComponent={renderSeparator}
-            ListHeaderComponent={renderHeader}
-            scrollEnabled={true}
-            nestedScrollEnabled={true}
-          />
-        )}
+        }
+      />
 
-        <Modal
-          visible={showForm}
-          transparent={true}
-          animationType="slide"
-          onRequestClose={handleCloseForm}
-        >
-          <View style={styles.modalContainer}>
-            <View style={styles.modalContent}>
-              <UserForm
-                initialData={selectedUser}
-                onSubmit={handleFormSubmit}
-                onCancel={handleCloseForm}
-                loading={formLoading}
-              />
-            </View>
+      <Modal
+        visible={showForm}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={handleCloseForm}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <UserForm
+              initialData={selectedUser}
+              onSubmit={handleFormSubmit}
+              onCancel={handleCloseForm}
+              loading={formLoading}
+            />
           </View>
-        </Modal>
-      </View>
-    </Screen>
+        </View>
+      </Modal>
+    </>
   );
 }
 
@@ -203,10 +199,9 @@ const styles = StyleSheet.create({
   },
   addButton: {
     backgroundColor: '#007AFF',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
     borderRadius: 6,
-    margin: 12,
     alignItems: 'center',
   },
   addButtonText: {
@@ -215,10 +210,16 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   header: {
+    flex: 1,
+  },
+  headerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 12,
     backgroundColor: '#fff',
-    padding: 12,
-    marginVertical: 8,
-    borderRadius: 6,
+    marginBottom: 8,
   },
   headerTitle: {
     fontSize: 16,

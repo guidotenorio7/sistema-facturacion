@@ -1,11 +1,30 @@
-import { View, Text, Pressable, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, Pressable, StyleSheet, ScrollView, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useSession } from '../components/Session';
 import Screen from '../components/Screen';
 
 export default function IndexScreen() {
   const navigation = useNavigation();
-  const { user } = useSession();
+  const { user, setIsInitiated, setToken, setUser } = useSession();
+
+  const handleLogout = () => {
+    Alert.alert(
+      'Cerrar Sesión',
+      '¿Estás seguro de que deseas cerrar sesión?',
+      [
+        { text: 'Cancelar', onPress: () => {}, style: 'cancel' },
+        {
+          text: 'Cerrar Sesión',
+          onPress: () => {
+            setIsInitiated(false);
+            setToken(null);
+            setUser(null);
+          },
+          style: 'destructive',
+        },
+      ]
+    );
+  };
 
   const menuItems = [
     {
@@ -75,6 +94,13 @@ export default function IndexScreen() {
           Tienes acceso a todas las funcionalidades de facturación. Crea, gestiona y visualiza tus facturas de forma sencilla.
         </Text>
       </View>
+
+      <Pressable
+        style={styles.logoutButton}
+        onPress={handleLogout}
+      >
+        <Text style={styles.logoutButtonText}>🚪 Cerrar Sesión</Text>
+      </Pressable>
     </ScrollView>
   );
 }
@@ -162,5 +188,18 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#558B2F',
     lineHeight: 20,
+  },
+  logoutButton: {
+    backgroundColor: '#d32f2f',
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 25,
+  },
+  logoutButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

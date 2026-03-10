@@ -1,4 +1,4 @@
-import { View, Text, TextInput, Pressable, StyleSheet, Alert } from 'react-native';
+import { View, Text, TextInput, Pressable, StyleSheet, Alert, KeyboardAvoidingView, ScrollView, Platform } from 'react-native';
 import { useState, useEffect } from 'react';
 import { Picker } from '@react-native-picker/picker';
 import TextField from './TextField';
@@ -68,90 +68,104 @@ export default function UserForm({ initialData, onSubmit, onCancel, loading = fa
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>{initialData ? 'Editar Usuario' : 'Nuevo Usuario'}</Text>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={{ flex: 1 }}
+    >
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View style={styles.container}>
+          <Text style={styles.title}>{initialData ? 'Editar Usuario' : 'Nuevo Usuario'}</Text>
 
-      <TextField
-        label="Usuario"
-        value={formData.username}
-        onChangeText={(text) => handleChange('username', text)}
-        placeholder="Ingrese usuario"
-        editable={!initialData}
-      />
+          <TextField
+            label="Usuario"
+            value={formData.username}
+            onChangeText={(text) => handleChange('username', text)}
+            placeholder="Ingrese usuario"
+            editable={!initialData}
+          />
 
-      <TextField
-        label="Nombre Completo"
-        value={formData.fullName}
-        onChangeText={(text) => handleChange('fullName', text)}
-        placeholder="Ingrese nombre completo"
-      />
+          <TextField
+            label="Nombre Completo"
+            value={formData.fullName}
+            onChangeText={(text) => handleChange('fullName', text)}
+            placeholder="Ingrese nombre completo"
+          />
 
-      <TextField
-        label="Email"
-        value={formData.email}
-        onChangeText={(text) => handleChange('email', text)}
-        placeholder="Ingrese email"
-        keyboardType="email-address"
-      />
+          <TextField
+            label="Email"
+            value={formData.email}
+            onChangeText={(text) => handleChange('email', text)}
+            placeholder="Ingrese email"
+            keyboardType="email-address"
+          />
 
-      {!initialData && (
-        <TextField
-          label="Contraseña"
-          value={formData.password}
-          onChangeText={(text) => handleChange('password', text)}
-          placeholder="Ingrese contraseña"
-          secureTextEntry={true}
-        />
-      )}
+          {!initialData && (
+            <TextField
+              label="Contraseña"
+              value={formData.password}
+              onChangeText={(text) => handleChange('password', text)}
+              placeholder="Ingrese contraseña"
+              secureTextEntry={true}
+            />
+          )}
 
-      <View style={styles.rolesSection}>
-        <Text style={styles.rolesLabel}>Roles:</Text>
-        <View style={styles.rolesContainer}>
-          {['admin', 'user', 'operator'].map(role => (
+          <View style={styles.rolesSection}>
+            <Text style={styles.rolesLabel}>Roles:</Text>
+            <View style={styles.rolesContainer}>
+              {['admin', 'user', 'operator'].map(role => (
+                <Pressable
+                  key={role}
+                  style={[
+                    styles.roleCheckbox,
+                    formData.roles.includes(role) && styles.roleCheckboxSelected,
+                  ]}
+                  onPress={() => handleToggleRole(role)}
+                >
+                  <Text
+                    style={[
+                      styles.roleCheckboxText,
+                      formData.roles.includes(role) && styles.roleCheckboxTextSelected,
+                    ]}
+                  >
+                    {role === 'admin' ? 'Administrador' : role === 'operator' ? 'Operador' : 'Usuario'}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+          </View>
+
+          <View style={styles.actions}>
             <Pressable
-              key={role}
-              style={[
-                styles.roleCheckbox,
-                formData.roles.includes(role) && styles.roleCheckboxSelected,
-              ]}
-              onPress={() => handleToggleRole(role)}
+              style={[styles.submitButton, loading && styles.buttonDisabled]}
+              onPress={handleSubmit}
+              disabled={loading}
             >
-              <Text
-                style={[
-                  styles.roleCheckboxText,
-                  formData.roles.includes(role) && styles.roleCheckboxTextSelected,
-                ]}
-              >
-                {role === 'admin' ? 'Administrador' : role === 'operator' ? 'Operador' : 'Usuario'}
+              <Text style={styles.submitButtonText}>
+                {loading ? 'Guardando...' : initialData ? 'Actualizar' : 'Crear'}
               </Text>
             </Pressable>
-          ))}
+            <Pressable
+              style={styles.cancelButton}
+              onPress={onCancel}
+              disabled={loading}
+            >
+              <Text style={styles.cancelButtonText}>Cancelar</Text>
+            </Pressable>
+          </View>
         </View>
-      </View>
-
-      <View style={styles.actions}>
-        <Pressable
-          style={[styles.submitButton, loading && styles.buttonDisabled]}
-          onPress={handleSubmit}
-          disabled={loading}
-        >
-          <Text style={styles.submitButtonText}>
-            {loading ? 'Guardando...' : initialData ? 'Actualizar' : 'Crear'}
-          </Text>
-        </Pressable>
-        <Pressable
-          style={styles.cancelButton}
-          onPress={onCancel}
-          disabled={loading}
-        >
-          <Text style={styles.cancelButtonText}>Cancelar</Text>
-        </Pressable>
-      </View>
-    </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+  },
   container: {
     backgroundColor: '#fff',
     padding: 16,
