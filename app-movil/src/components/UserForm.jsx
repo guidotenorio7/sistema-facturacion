@@ -1,4 +1,4 @@
-import { View, Text, TextInput, Pressable, StyleSheet, Alert, KeyboardAvoidingView, ScrollView, Platform } from 'react-native';
+import { View, Text, TextInput, Pressable, StyleSheet, Alert, ScrollView } from 'react-native';
 import { useState, useEffect } from 'react';
 import { Picker } from '@react-native-picker/picker';
 import TextField from './TextField';
@@ -68,13 +68,10 @@ export default function UserForm({ initialData, onSubmit, onCancel, loading = fa
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={{ flex: 1 }}
-    >
+    <View style={styles.outerContainer}>
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
+        bounces={false}
       >
         <View style={styles.container}>
           <Text style={styles.title}>{initialData ? 'Editar Usuario' : 'Nuevo Usuario'}</Text>
@@ -157,19 +154,21 @@ export default function UserForm({ initialData, onSubmit, onCancel, loading = fa
           </View>
         </View>
       </ScrollView>
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  scrollContent: {
-    flexGrow: 1,
-    justifyContent: 'center',
+  outerContainer: {
+    flex: 1,
+    width: '100%',
   },
   container: {
     backgroundColor: '#fff',
     padding: 16,
     borderRadius: 8,
+    margin: 8,
+    marginBottom: 20,
   },
   title: {
     fontSize: 18,
