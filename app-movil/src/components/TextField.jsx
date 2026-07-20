@@ -1,6 +1,6 @@
 import { View, Text, TextInput, StyleSheet } from 'react-native';
 
-export default function TextField({ label, placeholder, value, onChangeText, secureTextEntry = false }) {
+export default function TextField({ label, placeholder, value, onChangeText, secureTextEntry = false, keyboardType = 'default', editable = true }) {
   return (
     <View style={styles.container}>
       {label && <Text style={styles.label}>{label}</Text>}
@@ -9,7 +9,9 @@ export default function TextField({ label, placeholder, value, onChangeText, sec
         value={value}
         onChangeText={onChangeText}
         secureTextEntry={secureTextEntry}
-        style={styles.input}
+        keyboardType={keyboardType}
+        editable={editable}
+        style={[styles.input, !editable && styles.inputDisabled]}
         placeholderTextColor="#999"
       />
     </View>
@@ -37,5 +39,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
     backgroundColor: '#fff',
     color: '#333',
+  },
+  inputDisabled: {
+    backgroundColor: '#f5f5f5',
+    color: '#999',
   },
 });
