@@ -23,11 +23,12 @@ export const PERMISSIONS = {
   'user.view_all': ['admin'],
 
   // Gestión de Facturas
-  'invoice.create': ['admin', 'operador', 'usuario'],
+  // Ahora: solo admins pueden crear/exportar; operadores se comportan como usuarios
+  'invoice.create': ['admin'],
   'invoice.list': ['admin', 'operador', 'usuario'],
   'invoice.view': ['admin', 'operador', 'usuario'],
   'invoice.delete': ['admin'],
-  'invoice.export': ['admin', 'operador'],
+  'invoice.export': ['admin'],
 
   // Reporting
   'report.view': ['admin', 'operador'],
@@ -49,7 +50,7 @@ export const ROLE_DESCRIPTIONS = {
   },
   operador: {
     name: 'Operador',
-    description: 'Puede crear y gestionar facturas, ver reportes',
+    description: 'Permisos equivalentes a Usuario: puede ver sus facturas pero no editarlas',
     color: '#f57c00',
     icon: '👨‍💻',
   },

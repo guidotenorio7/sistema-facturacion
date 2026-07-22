@@ -7,6 +7,8 @@ export default function IndexScreen() {
   const navigation = useNavigation();
   const { user, setIsInitiated, setToken, setUser } = useSession();
 
+  const canCreateInvoice = user?.roles?.includes?.('admin');
+
   const handleLogout = () => {
     Alert.alert(
       'Cerrar Sesión',
@@ -27,13 +29,13 @@ export default function IndexScreen() {
   };
 
   const menuItems = [
-    {
+    ...(canCreateInvoice ? [{
       id: 'invoice-create',
       title: 'Crear Factura',
       description: 'Crear una nueva factura',
       icon: '📄',
       action: () => navigation.navigate('InvoiceCreate'),
-    },
+    }] : []),
     {
       id: 'invoice-history',
       title: 'Historial de Facturas',

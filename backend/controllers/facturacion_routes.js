@@ -22,4 +22,11 @@ export function facturacion(app) {
     checkForPermission('invoice.list'),
     FacturacionController.listInvoices
   );
+
+  // Eliminar factura (solo admin por permisos)
+  app.delete(
+    '/facturacion/:uuid',
+    checkForPermission('invoice.delete'),
+    FacturacionController.deleteInvoice
+  );
 }

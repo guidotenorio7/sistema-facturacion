@@ -9,6 +9,7 @@ export default function InvoiceHistoryScreen() {
   const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [selectedIds, setSelectedIds] = useState([]);
 
   // Debug: Verificar que el token existe
   useEffect(() => {
@@ -75,7 +76,16 @@ export default function InvoiceHistoryScreen() {
   };
 
   const renderInvoiceItem = ({ item }) => (
-    <View style={styles.card}>
+    <Pressable
+      onLongPress={() => {
+        // toggle selection
+        setSelectedIds(prev => {
+          if (prev.includes(item.uuid)) return prev.filter(id => id !== item.uuid);
+          return [...prev, item.uuid];
+        });
+      }}
+    >
+      <View style={[styles.card, selectedIds.includes(item.uuid) && styles.cardSelected]}>
       <View style={styles.cardHeader}>
         <Text style={styles.invoiceNumber}>
           {item.invoiceNumber || item.number || `Factura #${item.id}`}
@@ -132,6 +142,7 @@ export default function InvoiceHistoryScreen() {
         )}
       </View>
     </View>
+    </Pressable>
   );
 
   const renderEmpty = () => (
@@ -168,7 +179,43 @@ export default function InvoiceHistoryScreen() {
   );
 
   return (
-    <FlatList
+    <>
+      {selectedIds.length > 0 && (
+        <View style={styles.selectionBar}>
+          <Pressable
+            style={styles.deleteSelectedButton}
+            onPress={async () => {
+              Alert.alert(
+                'Confirmar eliminación',
+                `¿Eliminar ${selectedIds.length} factura(s)?`,
+                [
+                  { text: 'Cancelar', style: 'cancel' },
+                  {
+                    text: 'Eliminar',
+                    style: 'destructive',
+                    onPress: async () => {
+                      try {
+                        for (const id of selectedIds) {
+                          await facturacionService.deleteInvoice(id, token);
+                        }
+                        setSelectedIds([]);
+                        loadInvoices();
+                        Alert.alert('Éxito', 'Facturas eliminadas');
+                      } catch (err) {
+                        Alert.alert('Error', 'Error al eliminar facturas');
+                      }
+                    }
+                  }
+                ]
+              );
+            }}
+          >
+            <Text style={styles.deleteSelectedText}>Eliminar seleccionadas ({selectedIds.length})</Text>
+          </Pressable>
+        </View>
+      )}
+
+      <FlatList
       style={styles.container}
       data={invoices}
       renderItem={renderInvoiceItem}
@@ -187,6 +234,7 @@ export default function InvoiceHistoryScreen() {
         />
       }
     />
+    </>
   );
 }
 
@@ -244,6 +292,27 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 3,
     elevation: 2,
+  },
+  cardSelected: {
+    borderWidth: 2,
+    borderColor: '#d32f2f',
+  },
+  selectionBar: {
+    padding: 10,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  deleteSelectedButton: {
+    backgroundColor: '#d32f2f',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  deleteSelectedText: {
+    color: '#fff',
+    fontWeight: '700',
   },
   cardHeader: {
     backgroundColor: '#f9f9f9',

@@ -108,6 +108,34 @@ const facturacionService = {
       };
     }
   },
+
+  // Eliminar una factura por UUID
+  async deleteInvoice(uuid, token) {
+    try {
+      if (!token) {
+        throw new Error('Token no disponible. Por favor inicia sesión nuevamente.');
+      }
+
+      const response = await fetch(`${API_URL}/facturacion/${uuid}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || `Error ${response.status}`);
+      }
+
+      return { success: true };
+    } catch (error) {
+      console.log('Error deleting invoice:', error);
+      return { success: false, error: error.message || 'Error al eliminar factura' };
+    }
+  },
 };
 
 export default facturacionService;

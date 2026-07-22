@@ -155,4 +155,29 @@ export class FacturacionController {
       });
     }
   }
+
+  static async deleteInvoice(req, res) {
+    try {
+      const { uuid } = req.params;
+      if (!uuid) {
+        return res.status(400).json({ error: 'UUID requerido' });
+      }
+
+      const InvoiceModel = getDependency('InvoiceModel');
+      const invoice = await InvoiceModel.findOne({ uuid });
+
+      if (!invoice) {
+        return res.status(404).json({ error: 'Factura no encontrada' });
+      }
+
+      await InvoiceModel.deleteOne({ uuid });
+
+      return res.status(200).json({ success: true });
+    } catch (error) {
+      console.error('FacturacionController.deleteInvoice:', error);
+      return res.status(error.statusCode || 400).json({
+        error: error.message || 'Error al eliminar factura',
+      });
+    }
+  }
 }

@@ -23,7 +23,7 @@ export default function Usuarios() {
         onYes: () => {
           userService.deleteUser(uuid)
             .then(() => {
-              snackbar.enqueue('Usuario eliminado', { variant: 'success' });4
+              snackbar.enqueue('Usuario eliminado', { variant: 'success' });
               userService.get()
                 .then(setUsuarios);
             })
