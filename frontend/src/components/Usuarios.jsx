@@ -4,16 +4,24 @@ import Button from './Button.jsx';
 import { Link } from 'react-router-dom';
 import useModal from './Modal.jsx';
 import { useSnackbar } from './Snackbar.jsx';
+import useSession from './Session.jsx';
 
 export default function Usuarios() {
+  const session = useSession();
   const [usuarios, setUsuarios] = useState([]);
   const modal = useModal();
   const snackbar = useSnackbar();
+  const isAdmin = session.user?.roles?.includes('admin');
 
   useEffect(() => {
+    if (!isAdmin) {
+      setUsuarios([]);
+      return;
+    }
+
     userService.get()
       .then(setUsuarios);
-  }, []);
+  }, [isAdmin]);
 
   function deleteUsuario(uuid) {
     modal.open(
@@ -34,6 +42,15 @@ export default function Usuarios() {
           modal.close();
         },
       }
+    );
+  }
+
+  if (!isAdmin) {
+    return (
+      <div className="access-denied-card">
+        <h3>Acceso denegado</h3>
+        <p>Usted no tiene acceso.</p>
+      </div>
     );
   }
 
