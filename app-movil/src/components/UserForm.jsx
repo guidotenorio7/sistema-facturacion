@@ -112,7 +112,7 @@ export default function UserForm({ initialData, onSubmit, onCancel, loading = fa
           <View style={styles.rolesSection}>
             <Text style={styles.rolesLabel}>Roles:</Text>
             <View style={styles.rolesContainer}>
-              {['admin', 'user', 'operator'].map(role => (
+              {['admin', 'user', 'operador'].map(role => (
                 <Pressable
                   key={role}
                   style={[
@@ -127,7 +127,7 @@ export default function UserForm({ initialData, onSubmit, onCancel, loading = fa
                       formData.roles.includes(role) && styles.roleCheckboxTextSelected,
                     ]}
                   >
-                    {role === 'admin' ? 'Administrador' : role === 'operator' ? 'Operador' : 'Usuario'}
+                    {role === 'admin' ? 'Administrador' : role === 'operador' ? 'Operador' : 'Usuario'}
                   </Text>
                 </Pressable>
               ))}

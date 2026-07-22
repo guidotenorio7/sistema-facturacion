@@ -14,7 +14,7 @@ export class UserMockup {
       hashedPassword: '$2b$10$teSUseenCaoeaMUpmBpl7unyHN5n6w1ZEnZmgyLNveMBpPZULn.Ge',
       fullName: 'Operador',
       email: 'operator@fake.com',
-      roles: ['operator'],
+      roles: ['operador'],
     },
   ];
 

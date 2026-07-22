@@ -74,12 +74,7 @@ export default function Usuario() {
         name="roles"
         options={[
           { value: 'admin',    label: 'Administrador' },
-          { value: 'operator', label: 'Operador' },
-        ]}
-        value={data.roles || []}
-        onChange={selected => setData({ ...data, roles: selected })}
-      />
-
+            { value: 'operador', label: 'Operador' },
       <TextField
         label="Cambiar contraseña"
         name="password"

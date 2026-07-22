@@ -6,13 +6,7 @@ export default function Content() {
   const session = useSession();
 
   return (
-    <div
-      className="content"
-      style={{
-        flexGrow: 1,
-        overflow: 'auto',
-      }}
-    >
+    <div className="content">
       {!session.isLoggedIn ?
         <Login />
       : <Router /> }

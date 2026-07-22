@@ -15,7 +15,13 @@
   background-color: #82a79f;
 }
 
-.menu a {
+.menu a,
+.menu button.menu-button {
   text-decoration: none;
   color: white;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
 }

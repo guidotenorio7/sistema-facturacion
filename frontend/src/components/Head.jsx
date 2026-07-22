@@ -7,28 +7,12 @@ export default function Head({
   const session = useSession();
 
   return (
-    <div
-      className="head"
-      style={{
-        width: '100%',
-        display: 'flex',
-        justifyContent: 'space-between',
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: '#444',
-      }}
-    >
+    <div className="head">
       <MenuIcon
         onClick={() => setMenuShowed(value => !value)}
       />
-      <h1
-        style={{
-          margin: 0,
-        }}
-      >
-        TUDS - DA - 2025
-      </h1>
-      <div>
+      <h1>TUDS - DA - 2025</h1>
+      <div className="head-user">
         {session.user?.fullName}
       </div>
     </div>

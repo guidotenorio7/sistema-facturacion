@@ -12,9 +12,19 @@ export default function InvoiceCreateScreen() {
     clientName: '',
     clientEmail: '',
     description: '',
-    amount: '',
-    quantity: '1',
+    itemDescription: '',
+    itemQuantity: '1',
+    itemUnitPrice: '',
   });
+
+  const totalAmount = (() => {
+    const quantity = parseInt(formData.itemQuantity, 10);
+    const unitPrice = parseFloat(formData.itemUnitPrice);
+    if (!formData.itemQuantity || !formData.itemUnitPrice || isNaN(quantity) || isNaN(unitPrice) || quantity <= 0 || unitPrice < 0) {
+      return '';
+    }
+    return (quantity * unitPrice).toFixed(2);
+  })();
 
   // Debug: Verificar que el token existe
   useEffect(() => {
@@ -40,11 +50,15 @@ export default function InvoiceCreateScreen() {
       Alert.alert('Error', 'La descripción es requerida');
       return false;
     }
-    if (!formData.amount.trim() || isNaN(formData.amount) || parseFloat(formData.amount) <= 0) {
-      Alert.alert('Error', 'El monto debe ser un número válido mayor a 0');
+    if (!formData.itemDescription.trim()) {
+      Alert.alert('Error', 'La descripción del ítem es requerida');
       return false;
     }
-    if (!formData.quantity.trim() || isNaN(formData.quantity) || parseInt(formData.quantity) <= 0) {
+    if (!formData.itemUnitPrice.trim() || isNaN(formData.itemUnitPrice) || parseFloat(formData.itemUnitPrice) < 0) {
+      Alert.alert('Error', 'El precio unitario debe ser un número válido mayor o igual a 0');
+      return false;
+    }
+    if (!formData.itemQuantity.trim() || isNaN(formData.itemQuantity) || parseInt(formData.itemQuantity) <= 0) {
       Alert.alert('Error', 'La cantidad debe ser un número válido mayor a 0');
       return false;
     }
@@ -56,13 +70,25 @@ export default function InvoiceCreateScreen() {
 
     setLoading(true);
     try {
+      const quantity = parseInt(formData.itemQuantity, 10);
+      const unitPrice = parseFloat(formData.itemUnitPrice);
+      const amount = parseFloat((quantity * unitPrice).toFixed(2));
+
       const invoiceData = {
         invoiceNumber: formData.invoiceNumber,
         clientName: formData.clientName,
         clientEmail: formData.clientEmail || undefined,
         description: formData.description,
-        amount: parseFloat(formData.amount),
-        quantity: parseInt(formData.quantity),
+        quantity,
+        amount,
+        items: [
+          {
+            description: formData.itemDescription,
+            quantity,
+            unitPrice,
+            subtotal: amount,
+          },
+        ],
       };
 
       const result = await facturacionService.createInvoice(invoiceData, token);
@@ -77,8 +103,9 @@ export default function InvoiceCreateScreen() {
                 clientName: '',
                 clientEmail: '',
                 description: '',
-                amount: '',
-                quantity: '1',
+                itemDescription: '',
+                itemQuantity: '1',
+                itemUnitPrice: '',
               });
             },
           },
@@ -154,6 +181,20 @@ export default function InvoiceCreateScreen() {
           />
         </View>
 
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>Descripción del ítem *</Text>
+          <TextInput
+            style={[styles.input, { height: 80 }]}
+            placeholder="Ej: Servicio de consultoría"
+            multiline
+            numberOfLines={3}
+            value={formData.itemDescription}
+            onChangeText={(value) => handleChange('itemDescription', value)}
+            editable={!loading}
+            placeholderTextColor="#bbb"
+          />
+        </View>
+
         <View style={styles.row}>
           <View style={[styles.formGroup, styles.flex]}>
             <Text style={styles.label}>Cantidad *</Text>
@@ -161,25 +202,36 @@ export default function InvoiceCreateScreen() {
               style={styles.input}
               placeholder="Ej: 1"
               keyboardType="number-pad"
-              value={formData.quantity}
-              onChangeText={(value) => handleChange('quantity', value)}
+              value={formData.itemQuantity}
+              onChangeText={(value) => handleChange('itemQuantity', value)}
               editable={!loading}
               placeholderTextColor="#bbb"
             />
           </View>
 
           <View style={[styles.formGroup, styles.flex]}>
-            <Text style={styles.label}>Monto Total *</Text>
+            <Text style={styles.label}>Precio unitario *</Text>
             <TextInput
               style={styles.input}
               placeholder="Ej: 100.00"
               keyboardType="decimal-pad"
-              value={formData.amount}
-              onChangeText={(value) => handleChange('amount', value)}
+              value={formData.itemUnitPrice}
+              onChangeText={(value) => handleChange('itemUnitPrice', value)}
               editable={!loading}
               placeholderTextColor="#bbb"
             />
           </View>
+        </View>
+
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>Total calculado</Text>
+          <TextInput
+            style={[styles.input, styles.inputDisabled]}
+            value={totalAmount}
+            editable={false}
+            placeholder="0.00"
+            placeholderTextColor="#bbb"
+          />
         </View>
 
         <Text style={styles.requiredNote}>* Campos requeridos</Text>
@@ -202,8 +254,9 @@ export default function InvoiceCreateScreen() {
               clientName: '',
               clientEmail: '',
               description: '',
-              amount: '',
-              quantity: '1',
+              itemDescription: '',
+              itemQuantity: '1',
+              itemUnitPrice: '',
             });
           }}
           disabled={loading}

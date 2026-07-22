@@ -1,6 +1,7 @@
 import { InvalidArgumentException } from '../exceptions/invalid_arguments_exception.js';
 import { InvalidCredentialsException } from '../exceptions/invalid_credentials_exceptions.js';
 import { getDependency } from '../libs/dependencies.js';
+import { normalizeRoles } from '../config/roles.js';
 import bcrypt from 'bcrypt';
 import config from '../config.js';
 import jwt from 'jsonwebtoken';
@@ -23,12 +24,14 @@ export class LoginService {
     if (!(await bcrypt.compare(credentials.password, user.hashedPassword)))
       throw new InvalidCredentialsException();
 
+    const normalizedRoles = normalizeRoles(user.roles);
+
     const token = jwt.sign(
       {
         userId: user._id,
         username: user.username,
         fullName: user.fullName,
-        roles: user.roles,
+        roles: normalizedRoles,
       },
       config.jwtKey,
       {
@@ -42,7 +45,7 @@ export class LoginService {
         uuid: user.uuid,
         username: user.username,
         fullName: user.fullName,
-        roles: user.roles,
+        roles: normalizedRoles,
       },
     };
   }

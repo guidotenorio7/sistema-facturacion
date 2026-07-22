@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken';
 import config from '../config.js';
 import { ForbiddenException } from '../exceptions/forbidden_exception.js';
-import { hasPermission } from '../config/roles.js';
+import { hasPermission, normalizeRoles } from '../config/roles.js';
 
 export function authorizationMiddleware(req, res, next) {
   const auth = req.headers.authorization;
@@ -22,8 +22,12 @@ export function authorizationMiddleware(req, res, next) {
     .trim();
 
   const data = jwt.verify(token, config.jwtKey);
+  const normalizedRoles = normalizeRoles(data.roles);
 
-  req.session = data;
+  req.session = {
+    ...data,
+    roles: normalizedRoles,
+  };
     
   next();
 }

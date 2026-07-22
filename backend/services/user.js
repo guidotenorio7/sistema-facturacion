@@ -1,17 +1,29 @@
 import { getDependency } from "../libs/dependencies.js";
 import { InvalidArgumentException } from "../exceptions/invalid_arguments_exception.js";
+import { normalizeRole } from "../config/roles.js";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
+
+function normalizeUserRoles(user) {
+  if (!user || !Array.isArray(user.roles)) {
+    return user;
+  }
+
+  user.roles = user.roles.map(normalizeRole);
+  return user;
+}
 
 export class UserService {
   static async getSingleOrNullByUsername(username) {
     const UserModel = getDependency('UserModel');
-    return (await UserModel.find({ username }))[0];
+    const user = (await UserModel.find({ username }))[0];
+    return normalizeUserRoles(user);
   }
 
   static async get() {
     const UserModel = getDependency('UserModel');
-    return await UserModel.find({});
+    const users = await UserModel.find({});
+    return users.map(normalizeUserRoles);
   }
 
   static async create(user) {
@@ -29,8 +41,12 @@ export class UserService {
 
     if (user.roles && !Array.isArray(user.roles)) {
       throw new InvalidArgumentException('El parámetro roles dbe ser una lista.');
-    }    
-    
+    }
+
+    if (Array.isArray(user.roles)) {
+      user.roles = user.roles.map(normalizeRole);
+    }
+
     const UserModel = getDependency('UserModel');
     const existingUser = await  UserModel.find({ username: user.username });
     if (existingUser.length > 0) {

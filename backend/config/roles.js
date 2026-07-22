@@ -23,7 +23,7 @@ export const PERMISSIONS = {
   'user.view_all': ['admin'],
 
   // Gestión de Facturas
-  // Ahora: solo admins pueden crear/exportar; operadores se comportan como usuarios
+  // Operador solo puede ver y listar facturas, no crear/exportar ni editar usuarios
   'invoice.create': ['admin'],
   'invoice.list': ['admin', 'operador', 'usuario'],
   'invoice.view': ['admin', 'operador', 'usuario'],
@@ -68,10 +68,21 @@ export const ROLE_DESCRIPTIONS = {
  * @param {string} permission - Permiso a verificar
  * @returns {boolean} True si tiene permiso
  */
+export function normalizeRole(role) {
+  if (role === 'operator') return 'operador';
+  return role;
+}
+
+export function normalizeRoles(userRoles) {
+  if (!userRoles) return [];
+  const roles = Array.isArray(userRoles) ? userRoles : [userRoles];
+  return roles.map(normalizeRole);
+}
+
 export function hasPermission(userRoles, permission) {
   if (!userRoles) return false;
 
-  const roles = Array.isArray(userRoles) ? userRoles : [userRoles];
+  const roles = normalizeRoles(userRoles);
   const allowedRoles = PERMISSIONS[permission] || [];
 
   return roles.some(role => allowedRoles.includes(role));

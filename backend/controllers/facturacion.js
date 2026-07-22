@@ -26,31 +26,47 @@ export class FacturacionController {
 
       const InvoiceModel = getDependency('InvoiceModel');
 
-      // Datos por defecto para una factura simple
+      const items = Array.isArray(body.items) && body.items.length > 0
+        ? body.items.map((item) => {
+            const quantity = parseInt(item.quantity, 10) || 0;
+            const unitPrice = parseFloat(item.unitPrice) || 0;
+            return {
+              description: item.description || body.description || 'Producto/Servicio',
+              quantity,
+              unitPrice,
+              subtotal: parseFloat((quantity * unitPrice).toFixed(2)),
+            };
+          })
+        : [
+            {
+              description: body.description || 'Producto/Servicio',
+              quantity: parseInt(body.quantity, 10) || 1,
+              unitPrice: parseFloat(body.amount) / (parseInt(body.quantity, 10) || 1),
+              subtotal: parseFloat(body.amount),
+            },
+          ];
+
+      const subtotal = items.reduce((sum, item) => sum + (item.subtotal || 0), 0);
+      const total = subtotal + (parseFloat(body.taxAmount) || 0);
+      const quantity = items.reduce((sum, item) => sum + (item.quantity || 0), 0) || 1;
+
       const invoiceData = {
         uuid: crypto.randomUUID(),
         invoiceNumber: body.invoiceNumber || `INV-${Date.now()}`,
         clientName: body.clientName,
         clientEmail: body.clientEmail || '',
         description: body.description || '',
-        amount: parseFloat(body.amount),
-        quantity: parseInt(body.quantity) || 1,
+        quantity,
+        items,
         createdBy: username,
         // Datos AFIP con valores por defecto para factura simple
         pointOfSale: body.pointOfSale || 1,
         cbteTipo: body.cbteTipo || 6, // 6 = Factura B
         docTipo: body.docTipo || 99, // 99 = Consumidor Final
         docNro: body.docNro || '0',
-        items: [
-          {
-            description: body.description || 'Producto/Servicio',
-            quantity: parseInt(body.quantity) || 1,
-            unitPrice: parseFloat(body.amount) / (parseInt(body.quantity) || 1),
-          },
-        ],
-        subtotal: parseFloat(body.amount),
-        taxAmount: 0,
-        total: parseFloat(body.amount),
+        subtotal,
+        taxAmount: parseFloat(body.taxAmount) || 0,
+        total,
         status: 'pending',
         createdAt: new Date(),
       };
