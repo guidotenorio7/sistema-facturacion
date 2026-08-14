@@ -1,6 +1,9 @@
 import { getDependency } from '../libs/dependencies.js';
 import { InvalidArgumentException } from '../exceptions/invalid_arguments_exception.js';
 import crypto from 'crypto';
+import PDFDocument from 'pdfkit';
+import jwt from 'jsonwebtoken';
+import config from '../config.js';
 
 export class FacturacionController {
   static async createInvoice(req, res) {
@@ -99,6 +102,18 @@ export class FacturacionController {
 
   static async getInvoiceStatus(req, res) {
     try {
+      // Si no viene sesión establecida por middleware, permitir token en query para descargar desde movil
+      if (!req.session) {
+        const tokenFromQuery = req.query?.token;
+        if (tokenFromQuery) {
+          try {
+            const data = jwt.verify(tokenFromQuery, config.jwtKey);
+            req.session = { ...data, roles: data.roles };
+          } catch (err) {
+            // ignorar, se validará más adelante por permisos
+          }
+        }
+      }
       const { uuid } = req.params;
       if (!uuid) {
         return res.status(400).json({ error: 'UUID requerido' });
@@ -128,6 +143,63 @@ export class FacturacionController {
       return res.status(error.statusCode || 400).json({
         error: error.message || 'Error al obtener factura',
       });
+    }
+  }
+
+  static async getInvoicePdf(req, res) {
+    try {
+      const { uuid } = req.params;
+      if (!uuid) {
+        return res.status(400).json({ error: 'UUID requerido' });
+      }
+
+      const InvoiceModel = getDependency('InvoiceModel');
+      const invoice = await InvoiceModel.findOne({ uuid });
+
+      if (!invoice) {
+        return res.status(404).json({ error: 'Factura no encontrada' });
+      }
+
+      // Generar PDF
+      const doc = new PDFDocument({ size: 'A4', margin: 50 });
+
+      res.setHeader('Content-Type', 'application/pdf');
+      const filename = `${invoice.invoiceNumber || invoice.uuid}.pdf`;
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+
+      doc.pipe(res);
+
+      doc.fontSize(20).text('Factura', { align: 'center' });
+      doc.moveDown();
+
+      doc.fontSize(12).text(`Número: ${invoice.invoiceNumber || invoice.uuid}`);
+      doc.text(`Fecha: ${invoice.createdAt ? new Date(invoice.createdAt).toLocaleString() : ''}`);
+      doc.text(`Cliente: ${invoice.clientName || ''}`);
+      if (invoice.clientEmail) doc.text(`Email: ${invoice.clientEmail}`);
+      doc.moveDown();
+
+      // Tabla de items (simple)
+      doc.fontSize(12).text('Items:', { underline: true });
+      doc.moveDown(0.5);
+
+      const items = invoice.items || [];
+      items.forEach((it, idx) => {
+        const desc = it.description || '';
+        const qty = it.quantity || 1;
+        const unit = (it.unitPrice || 0).toFixed(2);
+        const subtotal = (it.subtotal || (qty * (it.unitPrice || 0))).toFixed(2);
+        doc.text(`${idx + 1}. ${desc} — ${qty} x $${unit} = $${subtotal}`);
+      });
+
+      doc.moveDown();
+      doc.fontSize(12).text(`Subtotal: $${(invoice.subtotal || 0).toFixed(2)}`);
+      doc.text(`Impuestos: $${(invoice.taxAmount || 0).toFixed(2)}`);
+      doc.text(`Total: $${(invoice.total || 0).toFixed(2)}`);
+
+      doc.end();
+    } catch (error) {
+      console.error('FacturacionController.getInvoicePdf:', error);
+      return res.status(error.statusCode || 500).json({ error: error.message || 'Error al generar PDF' });
     }
   }
 

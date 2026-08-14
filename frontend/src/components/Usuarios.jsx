@@ -20,8 +20,9 @@ export default function Usuarios() {
     }
 
     userService.get()
-      .then(setUsuarios);
-  }, [isAdmin]);
+      .then(setUsuarios)
+      .catch(() => snackbar.enqueue('No se pudieron cargar los usuarios', { variant: 'error' }));
+  }, [isAdmin, snackbar]);
 
   function deleteUsuario(uuid) {
     modal.open(
@@ -54,44 +55,42 @@ export default function Usuarios() {
     );
   }
 
-  return <>
-    <h3>Usuarios</h3>
-    <Button>
-      <Link to={`/usuario`}>
-        Agregar
-      </Link>
-    </Button>
-    <table className="data-table"
-    >
-      <thead>
-        <tr>
-          <th>Nombre de usuario</th>
-          <th>Nombre completo</th>
-          <th>Email</th>
-          <th>Roles</th>
-          <th>Acciones</th>
-        </tr>
-      </thead>
-      <tbody>
-        {usuarios.map(usuario => <tr key={usuario.uuid}>
-          <td>{usuario.username}</td>
-          <td>{usuario.fullName}</td>
-          <td>{usuario.email}</td>
-          <td>{usuario.roles.join(", ")}</td>
-          <td>
-            <Button>
-              <Link to={`/usuario/${usuario.uuid}`}>
-                Editar
-              </Link>
-            </Button>
-            <Button
-              onClick={() => deleteUsuario(usuario.uuid)}
-            >
-              Eliminar
-            </Button>
-          </td>
-        </tr>)}
-      </tbody>
-    </table>
-  </>;
+  return (
+    <div className="home-shell animate-content">
+      <section className="home-hero">
+        <div>
+          <p className="home-eyebrow">Usuarios</p>
+          <h2>Listado de usuarios</h2>
+          <p>Estos datos se cargan desde la base de datos del backend.</p>
+        </div>
+        <Button>
+          <Link to="/usuario">
+            Agregar
+          </Link>
+        </Button>
+      </section>
+
+      <section className="home-summary">
+        {usuarios.map((usuario) => (
+          <div className="home-summary-row" key={usuario.uuid}>
+            <div>
+              <strong>{usuario.fullName}</strong>
+              <p>{usuario.username} • {usuario.email}</p>
+              <small>{usuario.roles?.join(', ')}</small>
+            </div>
+            <div className="home-summary-meta">
+              <Button>
+                <Link to={`/usuario/${usuario.uuid}`}>
+                  Editar
+                </Link>
+              </Button>
+              <Button onClick={() => deleteUsuario(usuario.uuid)}>
+                Eliminar
+              </Button>
+            </div>
+          </div>
+        ))}
+      </section>
+    </div>
+  );
 }

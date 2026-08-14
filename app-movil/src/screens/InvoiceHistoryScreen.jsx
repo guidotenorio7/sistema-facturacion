@@ -1,4 +1,5 @@
 import { View, Text, FlatList, Pressable, StyleSheet, RefreshControl, Alert, SectionList } from 'react-native';
+import { Linking } from 'react-native';
 import { useState, useCallback, useEffect } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { useSession } from '../components/Session';
@@ -140,6 +141,21 @@ export default function InvoiceHistoryScreen() {
             </Text>
           </View>
         )}
+        <View style={styles.actionsRow}>
+          <Pressable
+            style={styles.downloadButton}
+            onPress={() => {
+              try {
+                const url = facturacionService.getInvoicePdfUrl(item.uuid, token);
+                Linking.openURL(url);
+              } catch (err) {
+                Alert.alert('Error', 'No se pudo abrir el PDF');
+              }
+            }}
+          >
+            <Text style={styles.downloadText}>Descargar</Text>
+          </Pressable>
+        </View>
       </View>
     </View>
     </Pressable>
@@ -401,5 +417,20 @@ const styles = StyleSheet.create({
   },
   emptyListContent: {
     flexGrow: 1,
+  },
+  actionsRow: {
+    marginTop: 10,
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+  },
+  downloadButton: {
+    backgroundColor: '#1976D2',
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 6,
+  },
+  downloadText: {
+    color: '#fff',
+    fontWeight: '700',
   },
 });

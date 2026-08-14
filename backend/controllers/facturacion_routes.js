@@ -23,6 +23,13 @@ export function facturacion(app) {
     FacturacionController.listInvoices
   );
 
+  // Descargar/obtener PDF de una factura
+  app.get(
+    '/facturacion/:uuid/pdf',
+    checkForPermission('invoice.export'),
+    FacturacionController.getInvoicePdf
+  );
+
   // Eliminar factura (solo admin por permisos)
   app.delete(
     '/facturacion/:uuid',

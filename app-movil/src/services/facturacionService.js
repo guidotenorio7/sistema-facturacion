@@ -136,6 +136,13 @@ const facturacionService = {
       return { success: false, error: error.message || 'Error al eliminar factura' };
     }
   },
+
+  // Construir URL pública para descargar el PDF de la factura (incluye token como query)
+  getInvoicePdfUrl(uuid, token) {
+    if (!token) return `${API_URL}/facturacion/${uuid}/pdf`;
+    // Añadir token en query para permitir la descarga desde un navegador
+    return `${API_URL}/facturacion/${uuid}/pdf?token=${encodeURIComponent(token)}`;
+  },
 };
 
 export default facturacionService;
