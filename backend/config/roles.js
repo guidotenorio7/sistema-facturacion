@@ -31,7 +31,7 @@ export const PERMISSIONS = {
   'invoice.list': ['admin', 'operador', 'usuario'],
   'invoice.view': ['admin', 'operador', 'usuario'],
   'invoice.delete': ['admin', 'operador'],
-  'invoice.export': ['admin'],
+  'invoice.export': ['admin', 'operador', 'usuario'],
 
   // Reporting
   'report.view': ['admin', 'operador'],

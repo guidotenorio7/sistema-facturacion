@@ -1,4 +1,4 @@
-import { getJson, postJson, deleteItem } from '../libs/api.js';
+import { getJson, postJson, deleteItem, headers as apiHeaders } from '../libs/api.js';
 
 export async function listInvoices() {
   const response = await getJson('/facturacion');
@@ -30,9 +30,19 @@ export async function deleteInvoice(uuid) {
 }
 
 export async function downloadInvoicePdf(uuid) {
+  const authHeader = apiHeaders.Authorization || (() => {
+    try {
+      const s = localStorage.getItem('session');
+      if (!s) return null;
+      const parsed = JSON.parse(s);
+      return parsed.token ? `Bearer ${parsed.token}` : null;
+    } catch (e) { return null; }
+  })();
+
   const response = await fetch(`/api/facturacion/${uuid}/pdf`, {
     method: 'GET',
     credentials: 'include',
+    headers: authHeader ? { Authorization: authHeader } : undefined,
   });
 
   if (!response.ok) throw new Error('No se pudo obtener el PDF');

@@ -28,11 +28,12 @@
   justify-content: space-between;
   align-items: flex-start;
   gap: 1rem;
-  padding: 1.25rem;
+  padding: 2rem;
+  min-height: 160px;
   border-radius: 24px;
   background: linear-gradient(135deg, rgba(14, 165, 233, 0.18), rgba(2, 132, 199, 0.32));
   border: 1px solid rgba(125, 211, 252, 0.2);
-  box-shadow: 0 20px 40px rgba(2, 132, 199, 0.16);
+  box-shadow: 0 30px 60px rgba(2, 132, 199, 0.18);
 }
 
 .home-hero h2 {
@@ -66,14 +67,14 @@
 .home-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 1rem;
+  gap: 1.25rem;
 }
 
 .home-card {
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
-  padding: 1rem;
+  padding: 1.35rem;
   border-radius: 18px;
   text-decoration: none;
   color: #e2e8f0;
@@ -91,11 +92,13 @@
 .home-card h3 {
   margin: 0;
   color: #f8fafc;
+  font-size: 1.15rem;
 }
 
 .home-card p {
   margin: 0;
   color: #cbd5e1;
+  font-size: 0.95rem;
 }
 
 .home-summary {

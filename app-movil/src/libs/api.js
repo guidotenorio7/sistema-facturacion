@@ -11,8 +11,15 @@ export async function postJson(endpoint, data) {
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Error en la respuesta del servidor');
+      // Intentar parsear JSON del error; si no es JSON, tomar texto bruto
+      let msg = 'Error en la respuesta del servidor';
+      try {
+        const errorData = await response.json();
+        msg = errorData.message || JSON.stringify(errorData) || msg;
+      } catch (e) {
+        try { msg = await response.text(); } catch (e2) { /* ignore */ }
+      }
+      throw new Error(msg);
     }
 
     return await response.json();
@@ -31,8 +38,14 @@ export async function getJson(endpoint) {
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Error en la respuesta del servidor');
+      let msg = 'Error en la respuesta del servidor';
+      try {
+        const errorData = await response.json();
+        msg = errorData.message || JSON.stringify(errorData) || msg;
+      } catch (e) {
+        try { msg = await response.text(); } catch (e2) { /* ignore */ }
+      }
+      throw new Error(msg);
     }
 
     return await response.json();
