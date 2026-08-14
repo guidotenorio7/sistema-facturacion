@@ -11,6 +11,22 @@ const invoiceSchema = new mongoose.Schema({
     required: true,
     default: () => `INV-${Date.now()}`,
   },
+  series: {
+    type: String,
+    default: '',
+  },
+  number: {
+    type: String,
+    default: '',
+  },
+  seriesNumber: {
+    type: String,
+    default: '',
+  },
+  issueDate: {
+    type: Date,
+    default: Date.now,
+  },
   localId: {
     type: Number,
     default: 0,
@@ -45,6 +61,16 @@ const invoiceSchema = new mongoose.Schema({
     type: String,
     default: '',
   },
+  issuer: {
+    name: String,
+    address: String,
+    taxId: String,
+  },
+  receiver: {
+    name: String,
+    address: String,
+    taxId: String,
+  },
   description: {
     type: String,
     default: '',
@@ -65,6 +91,17 @@ const invoiceSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
+  taxableBase: {
+    type: Number,
+    default: 0,
+  },
+  taxes: [
+    {
+      name: String,
+      rate: Number,
+      amount: Number,
+    },
+  ],
   taxAmount: {
     type: Number,
     default: 0,

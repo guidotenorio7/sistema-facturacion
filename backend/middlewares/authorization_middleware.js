@@ -20,8 +20,15 @@ export function authorizationMiddleware(req, res, next) {
   const token = auth
     .substring(7)
     .trim();
-
-  const data = jwt.verify(token, config.jwtKey);
+  let data;
+  try {
+    data = jwt.verify(token, config.jwtKey);
+  } catch (err) {
+    console.warn('authorizationMiddleware: token verification failed:', err.message);
+    // Responder 401 en caso de token inválido en lugar de lanzar excepción
+    res.status(401).json({ error: 'Token inválido' });
+    return;
+  }
   const normalizedRoles = normalizeRoles(data.roles);
 
   req.session = {

@@ -4,10 +4,16 @@ import { createInvoice, deleteInvoice, listInvoices, downloadInvoicePdf } from '
 import { useSnackbar } from './Snackbar.jsx';
 
 const initialForm = {
-  clientName: '',
-  clientEmail: '',
+  seriesNumber: '',
+  issueDate: '',
+  issuerName: '',
+  issuerTaxId: '',
+  receiverName: '',
+  receiverTaxId: '',
   description: '',
-  amount: '',
+  unitCost: '',
+  quantity: '1',
+  taxPercent: '',
 };
 
 export default function Facturas() {
@@ -33,19 +39,30 @@ export default function Facturas() {
 
   async function handleSubmit(event) {
     event.preventDefault();
-    if (!form.clientName.trim() || !form.description.trim() || !form.amount) {
-      snackbar.enqueue('Completa cliente, detalle y monto', { variant: 'error' });
+    if (!form.description.trim() || !form.unitCost) {
+      snackbar.enqueue('Completa detalle, costo unitario y cantidad', { variant: 'error' });
       return;
     }
 
     setLoading(true);
     try {
+      const unitCost = parseFloat(form.unitCost) || 0;
+      const quantity = parseInt(form.quantity, 10) || 1;
+      const subtotal = parseFloat((unitCost * quantity).toFixed(2));
+      const taxPercent = parseFloat(form.taxPercent) || 0;
+      const taxAmount = taxPercent > 0 ? parseFloat(((subtotal * taxPercent) / 100).toFixed(2)) : 0;
+      const total = parseFloat((subtotal + taxAmount).toFixed(2));
+
       await createInvoice({
-        clientName: form.clientName,
-        clientEmail: form.clientEmail,
+        seriesNumber: form.seriesNumber || undefined,
+        issueDate: form.issueDate || undefined,
+        issuer: { name: form.issuerName || undefined, taxId: form.issuerTaxId || undefined },
+        receiver: { name: form.receiverName || undefined, taxId: form.receiverTaxId || undefined },
         description: form.description,
-        amount: Number(form.amount),
-        quantity: 1,
+        items: [{ description: form.description, quantity, unitPrice: unitCost, subtotal }],
+        taxableBase: subtotal,
+        taxes: taxAmount > 0 ? [{ name: 'IVA', rate: taxPercent, amount: taxAmount }] : [],
+        amount: total,
       });
       snackbar.enqueue('Factura creada correctamente', { variant: 'success' });
       setForm(initialForm);
@@ -83,14 +100,25 @@ export default function Facturas() {
       <form className="invoice-form" onSubmit={handleSubmit}>
         <h3>Nueva factura</h3>
         <input
-          placeholder="Cliente"
-          value={form.clientName}
-          onChange={(event) => setForm({ ...form, clientName: event.target.value })}
+          placeholder="Serie y número (ej: F-001-000123)"
+          value={form.seriesNumber}
+          onChange={(event) => setForm({ ...form, seriesNumber: event.target.value })}
         />
         <input
-          placeholder="Email (opcional)"
-          value={form.clientEmail}
-          onChange={(event) => setForm({ ...form, clientEmail: event.target.value })}
+          type="date"
+          placeholder="Fecha de emisión"
+          value={form.issueDate}
+          onChange={(event) => setForm({ ...form, issueDate: event.target.value })}
+        />
+        <input
+          placeholder="Nombre emisor"
+          value={form.issuerName}
+          onChange={(event) => setForm({ ...form, issuerName: event.target.value })}
+        />
+        <input
+          placeholder="CUIT/CUIL emisor"
+          value={form.issuerTaxId}
+          onChange={(event) => setForm({ ...form, issuerTaxId: event.target.value })}
         />
         <input
           placeholder="Detalle"
@@ -98,10 +126,32 @@ export default function Facturas() {
           onChange={(event) => setForm({ ...form, description: event.target.value })}
         />
         <input
+          placeholder="Nombre receptor"
+          value={form.receiverName}
+          onChange={(event) => setForm({ ...form, receiverName: event.target.value })}
+        />
+        <input
+          placeholder="CUIT/CUIL receptor"
+          value={form.receiverTaxId}
+          onChange={(event) => setForm({ ...form, receiverTaxId: event.target.value })}
+        />
+        <input
           type="number"
-          placeholder="Monto"
-          value={form.amount}
-          onChange={(event) => setForm({ ...form, amount: event.target.value })}
+          placeholder="Costo unitario"
+          value={form.unitCost}
+          onChange={(event) => setForm({ ...form, unitCost: event.target.value })}
+        />
+        <input
+          type="number"
+          placeholder="Cantidad"
+          value={form.quantity}
+          onChange={(event) => setForm({ ...form, quantity: event.target.value })}
+        />
+        <input
+          type="number"
+          placeholder="Porcentaje impuesto (ej: 21)"
+          value={form.taxPercent}
+          onChange={(event) => setForm({ ...form, taxPercent: event.target.value })}
         />
         <button className="button" type="submit" disabled={loading}>
           {loading ? 'Creando…' : 'Crear factura'}
@@ -120,8 +170,8 @@ export default function Facturas() {
           facturas.map((factura) => (
             <div className="home-summary-row" key={factura.uuid}>
               <div>
-                <strong>{factura.invoiceNumber || factura.uuid}</strong>
-                <p>{factura.clientName}</p>
+                <strong>{factura.seriesNumber || factura.invoiceNumber || factura.uuid}</strong>
+                <p>Qty: {factura.quantity || 1} • ${Number((factura.taxableBase || 0)).toFixed(2)} c/u</p>
                 <small>{factura.description}</small>
               </div>
               <div className="home-summary-meta">

@@ -16,6 +16,14 @@ export async function createInvoice(invoice) {
   };
 }
 
+export async function createInvoiceWeb(invoice) {
+  const response = await postJson('/facturacion', invoice);
+  return {
+    success: true,
+    data: response?.data || response,
+  };
+}
+
 export async function deleteInvoice(uuid) {
   await deleteItem('/facturacion', { path: uuid });
   return { success: true };

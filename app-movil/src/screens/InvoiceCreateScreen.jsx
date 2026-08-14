@@ -9,21 +9,29 @@ export default function InvoiceCreateScreen() {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     invoiceNumber: `INV-${Date.now()}`,
-    clientName: '',
-    clientEmail: '',
+    seriesNumber: '',
+    issueDate: '',
+    issuerName: '',
+    issuerTaxId: '',
+    receiverName: '',
+    receiverTaxId: '',
     description: '',
     itemDescription: '',
-    itemQuantity: '1',
-    itemUnitPrice: '',
+    quantity: '1',
+    unitCost: '',
+    taxPercent: '',
   });
 
   const totalAmount = (() => {
-    const quantity = parseInt(formData.itemQuantity, 10);
-    const unitPrice = parseFloat(formData.itemUnitPrice);
-    if (!formData.itemQuantity || !formData.itemUnitPrice || isNaN(quantity) || isNaN(unitPrice) || quantity <= 0 || unitPrice < 0) {
-      return '';
+    const unit = parseFloat(formData.unitCost);
+    const qty = parseInt(formData.quantity, 10);
+    const taxPct = parseFloat(formData.taxPercent) || 0;
+    if (!isNaN(unit) && unit >= 0 && !isNaN(qty) && qty > 0) {
+      const subtotal = unit * qty;
+      const tax = taxPct > 0 ? ((subtotal * taxPct) / 100) : 0;
+      return (subtotal + tax).toFixed(2);
     }
-    return (quantity * unitPrice).toFixed(2);
+    return '';
   })();
 
   // Debug: Verificar que el token existe
@@ -42,24 +50,15 @@ export default function InvoiceCreateScreen() {
   };
 
   const validateForm = () => {
-    if (!formData.clientName.trim()) {
-      Alert.alert('Error', 'El nombre del cliente es requerido');
-      return false;
-    }
     if (!formData.description.trim()) {
       Alert.alert('Error', 'La descripción es requerida');
       return false;
     }
-    if (!formData.itemDescription.trim()) {
-      Alert.alert('Error', 'La descripción del ítem es requerida');
-      return false;
-    }
-    if (!formData.itemUnitPrice.trim() || isNaN(formData.itemUnitPrice) || parseFloat(formData.itemUnitPrice) < 0) {
-      Alert.alert('Error', 'El precio unitario debe ser un número válido mayor o igual a 0');
-      return false;
-    }
-    if (!formData.itemQuantity.trim() || isNaN(formData.itemQuantity) || parseInt(formData.itemQuantity) <= 0) {
-      Alert.alert('Error', 'La cantidad debe ser un número válido mayor a 0');
+    // Validar que exista costo unitario + cantidad o ítem
+    const hasUnit = formData.unitCost && !isNaN(parseFloat(formData.unitCost));
+    const hasItem = formData.itemDescription && formData.itemUnitPrice && formData.itemQuantity;
+    if (!hasUnit && !hasItem) {
+      Alert.alert('Error', 'Debe completar costo unitario y cantidad, o los datos del ítem');
       return false;
     }
     return true;
@@ -70,26 +69,28 @@ export default function InvoiceCreateScreen() {
 
     setLoading(true);
     try {
-      const quantity = parseInt(formData.itemQuantity, 10);
-      const unitPrice = parseFloat(formData.itemUnitPrice);
-      const amount = parseFloat((quantity * unitPrice).toFixed(2));
-
-      const invoiceData = {
+      let invoiceData = {
         invoiceNumber: formData.invoiceNumber,
-        clientName: formData.clientName,
-        clientEmail: formData.clientEmail || undefined,
+        seriesNumber: formData.seriesNumber || undefined,
+        issueDate: formData.issueDate || undefined,
+        issuer: { name: formData.issuerName || undefined, taxId: formData.issuerTaxId || undefined },
+        receiver: { name: formData.receiverName || undefined, taxId: formData.receiverTaxId || undefined },
         description: formData.description,
-        quantity,
-        amount,
-        items: [
-          {
-            description: formData.itemDescription,
-            quantity,
-            unitPrice,
-            subtotal: amount,
-          },
-        ],
       };
+
+      if (!isNaN(parseFloat(formData.unitCost)) && !isNaN(parseInt(formData.quantity, 10))) {
+        const unitCost = parseFloat(formData.unitCost);
+        const quantity = parseInt(formData.quantity, 10);
+        const subtotal = parseFloat((unitCost * quantity).toFixed(2));
+        const taxPercent = parseFloat(formData.taxPercent) || 0;
+        const taxAmount = taxPercent > 0 ? parseFloat(((subtotal * taxPercent) / 100).toFixed(2)) : 0;
+        invoiceData = { ...invoiceData, items: [{ description: formData.itemDescription || formData.description, quantity, unitPrice: unitCost, subtotal }], taxableBase: subtotal, taxes: taxAmount > 0 ? [{ name: 'IVA', rate: taxPercent, amount: taxAmount }] : [], total: parseFloat((subtotal + taxAmount).toFixed(2)), amount: parseFloat((subtotal + taxAmount).toFixed(2)) };
+      } else {
+        const quantity = parseInt(formData.itemQuantity, 10);
+        const unitPrice = parseFloat(formData.itemUnitPrice);
+        const amount = parseFloat((quantity * unitPrice).toFixed(2));
+        invoiceData = { ...invoiceData, quantity, amount, items: [{ description: formData.itemDescription, quantity, unitPrice, subtotal: amount }] };
+      }
 
       const result = await facturacionService.createInvoice(invoiceData, token);
 
@@ -100,12 +101,17 @@ export default function InvoiceCreateScreen() {
             onPress: () => {
               setFormData({
                 invoiceNumber: `INV-${Date.now()}`,
-                clientName: '',
-                clientEmail: '',
+                seriesNumber: '',
+                issueDate: '',
+                issuerName: '',
+                issuerTaxId: '',
+                receiverName: '',
+                receiverTaxId: '',
                 description: '',
                 itemDescription: '',
-                itemQuantity: '1',
-                itemUnitPrice: '',
+                quantity: '1',
+                unitCost: '',
+                taxPercent: '',
               });
             },
           },
@@ -143,28 +149,35 @@ export default function InvoiceCreateScreen() {
         </View>
 
         <View style={styles.formGroup}>
-          <Text style={styles.label}>Nombre del Cliente *</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Nombre completo del cliente"
-            value={formData.clientName}
-            onChangeText={(value) => handleChange('clientName', value)}
-            editable={!loading}
-            placeholderTextColor="#bbb"
-          />
+          <Text style={styles.label}>Serie y número</Text>
+          <TextInput style={styles.input} value={formData.seriesNumber} onChangeText={(v) => handleChange('seriesNumber', v)} />
         </View>
 
         <View style={styles.formGroup}>
-          <Text style={styles.label}>Email del Cliente</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="cliente@example.com"
-            keyboardType="email-address"
-            value={formData.clientEmail}
-            onChangeText={(value) => handleChange('clientEmail', value)}
-            editable={!loading}
-            placeholderTextColor="#bbb"
-          />
+          <Text style={styles.label}>Fecha de emisión</Text>
+          <TextInput style={styles.input} placeholder="YYYY-MM-DD" value={formData.issueDate} onChangeText={(v) => handleChange('issueDate', v)} />
+        </View>
+
+        <View style={styles.row}>
+          <View style={[styles.formGroup, styles.flex]}>
+            <Text style={styles.label}>Nombre emisor</Text>
+            <TextInput style={styles.input} value={formData.issuerName} onChangeText={(v) => handleChange('issuerName', v)} />
+          </View>
+          <View style={[styles.formGroup, styles.flex]}>
+            <Text style={styles.label}>CUIT/CUIL emisor</Text>
+            <TextInput style={styles.input} value={formData.issuerTaxId} onChangeText={(v) => handleChange('issuerTaxId', v)} />
+          </View>
+        </View>
+
+        <View style={styles.row}>
+          <View style={[styles.formGroup, styles.flex]}>
+            <Text style={styles.label}>Nombre receptor</Text>
+            <TextInput style={styles.input} value={formData.receiverName} onChangeText={(v) => handleChange('receiverName', v)} />
+          </View>
+          <View style={[styles.formGroup, styles.flex]}>
+            <Text style={styles.label}>CUIT/CUIL receptor</Text>
+            <TextInput style={styles.input} value={formData.receiverTaxId} onChangeText={(v) => handleChange('receiverTaxId', v)} />
+          </View>
         </View>
 
         <View style={styles.formGroup}>
@@ -182,7 +195,7 @@ export default function InvoiceCreateScreen() {
         </View>
 
         <View style={styles.formGroup}>
-          <Text style={styles.label}>Descripción del ítem *</Text>
+          <Text style={styles.label}>Descripción del ítem</Text>
           <TextInput
             style={[styles.input, { height: 80 }]}
             placeholder="Ej: Servicio de consultoría"
@@ -202,25 +215,30 @@ export default function InvoiceCreateScreen() {
               style={styles.input}
               placeholder="Ej: 1"
               keyboardType="number-pad"
-              value={formData.itemQuantity}
-              onChangeText={(value) => handleChange('itemQuantity', value)}
+              value={formData.quantity}
+              onChangeText={(value) => handleChange('quantity', value)}
               editable={!loading}
               placeholderTextColor="#bbb"
             />
           </View>
 
           <View style={[styles.formGroup, styles.flex]}>
-            <Text style={styles.label}>Precio unitario *</Text>
+            <Text style={styles.label}>Costo unitario *</Text>
             <TextInput
               style={styles.input}
               placeholder="Ej: 100.00"
               keyboardType="decimal-pad"
-              value={formData.itemUnitPrice}
-              onChangeText={(value) => handleChange('itemUnitPrice', value)}
+              value={formData.unitCost}
+              onChangeText={(value) => handleChange('unitCost', value)}
               editable={!loading}
               placeholderTextColor="#bbb"
             />
           </View>
+        </View>
+
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>% Impuesto</Text>
+          <TextInput style={styles.input} keyboardType="decimal-pad" value={formData.taxPercent} onChangeText={(v) => handleChange('taxPercent', v)} />
         </View>
 
         <View style={styles.formGroup}>
@@ -251,12 +269,20 @@ export default function InvoiceCreateScreen() {
           onPress={() => {
             setFormData({
               invoiceNumber: `INV-${Date.now()}`,
-              clientName: '',
               clientEmail: '',
               description: '',
               itemDescription: '',
               itemQuantity: '1',
               itemUnitPrice: '',
+              seriesNumber: '',
+              issueDate: '',
+              issuerName: '',
+              issuerTaxId: '',
+              receiverName: '',
+              receiverTaxId: '',
+              unitCost: '',
+              quantity: '1',
+              taxPercent: '',
             });
           }}
           disabled={loading}
