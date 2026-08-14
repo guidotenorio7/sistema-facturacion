@@ -68,6 +68,7 @@
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 1.25rem;
+  margin-top: 1rem;
 }
 
 .home-summary-cards {
@@ -75,6 +76,12 @@
   grid-template-columns: repeat(4, 1fr);
   gap: 1rem;
   margin-bottom: 1rem;
+}
+
+/* Make the summary cards span the full width of the parent grid
+   so they stay above the shortcut cards and do not overlap */
+.home-summary-cards {
+  grid-column: 1 / -1;
 }
 
 .stat-card {
