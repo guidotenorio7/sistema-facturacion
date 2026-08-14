@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import { listInvoices } from '../services/facturacionService.js';
 
 const shortcuts = [
-  { title: 'Facturas', description: 'Consulta y gestiona tus comprobantes.', path: '/facturas' },
   { title: 'Usuarios', description: 'Administra personas y permisos.', path: '/usuarios' },
   { title: 'Acerca de', description: 'Conoce más sobre la plataforma.', path: '/about' },
 ];
