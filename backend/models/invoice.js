@@ -55,7 +55,8 @@ const invoiceSchema = new mongoose.Schema({
   },
   clientName: {
     type: String,
-    required: true,
+    required: false,
+    default: '',
   },
   clientEmail: {
     type: String,

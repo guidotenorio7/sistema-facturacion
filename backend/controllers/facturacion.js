@@ -28,25 +28,39 @@ export class FacturacionController {
 
       const InvoiceModel = getDependency('InvoiceModel');
 
-      const items = Array.isArray(body.items) && body.items.length > 0
-        ? body.items.map((item) => {
-            const quantity = parseInt(item.quantity, 10) || 0;
-            const unitPrice = parseFloat(item.unitPrice) || 0;
-            return {
-              description: item.description || body.description || 'Producto/Servicio',
-              quantity,
-              unitPrice,
-              subtotal: parseFloat((quantity * unitPrice).toFixed(2)),
-            };
-          })
-        : [
-            {
-              description: body.description || 'Producto/Servicio',
-              quantity: parseInt(body.quantity, 10) || 1,
-              unitPrice: parseFloat(body.amount) / (parseInt(body.quantity, 10) || 1),
-              subtotal: parseFloat(body.amount),
-            },
-          ];
+      let items = [];
+      if (Array.isArray(body.items) && body.items.length > 0) {
+        items = body.items.map((item) => {
+          const quantity = parseInt(item.quantity, 10) || 0;
+          const unitPrice = parseFloat(item.unitPrice) || 0;
+          return {
+            description: item.description || body.description || 'Producto/Servicio',
+            quantity,
+            unitPrice,
+            subtotal: parseFloat((quantity * unitPrice).toFixed(2)),
+          };
+        });
+      } else if (!isNaN(parseFloat(body.unitCost)) && !isNaN(parseInt(body.quantity, 10))) {
+        const quantity = parseInt(body.quantity, 10) || 1;
+        const unitPrice = parseFloat(body.unitCost) || 0;
+        items = [
+          {
+            description: body.itemDescription || body.description || 'Producto/Servicio',
+            quantity,
+            unitPrice,
+            subtotal: parseFloat((quantity * unitPrice).toFixed(2)),
+          },
+        ];
+      } else {
+        items = [
+          {
+            description: body.description || 'Producto/Servicio',
+            quantity: parseInt(body.quantity, 10) || 1,
+            unitPrice: (!isNaN(parseFloat(body.amount)) && parseInt(body.quantity,10)) ? parseFloat(body.amount) / (parseInt(body.quantity, 10) || 1) : 0,
+            subtotal: !isNaN(parseFloat(body.amount)) ? parseFloat(body.amount) : 0,
+          },
+        ];
+      }
 
       const subtotal = items.reduce((sum, item) => sum + (item.subtotal || 0), 0);
       // Determinar taxable base y taxes
@@ -328,6 +342,19 @@ export class FacturacionController {
 
       if (!invoice) {
         return res.status(404).json({ error: 'Factura no encontrada' });
+      }
+
+      // Verificar permisos de eliminación por ownership
+      const username = req.session?.username;
+      const userRoles = req.session?.roles || [];
+      const isAdmin = Array.isArray(userRoles) && userRoles.includes('admin');
+      const isOperator = Array.isArray(userRoles) && userRoles.includes('operador');
+
+      if (isOperator && !isAdmin) {
+        // operador solo puede eliminar sus propias facturas
+        if (invoice.createdBy !== username) {
+          return res.status(403).json({ error: 'Acceso prohibido: solo puede eliminar sus propias facturas' });
+        }
       }
 
       await InvoiceModel.deleteOne({ uuid });
