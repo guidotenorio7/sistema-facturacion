@@ -40,8 +40,19 @@ export async function fetchApi(service, options) {
 
   let res = await fetch(`${urlBase}${service}${path}${query}`, options);
 
-  if (!res.ok)
-    throw new Error("El resultado no es OK.");
+  if (!res.ok) {
+    // Try to extract a helpful error message from the response body
+    let text = '';
+    try {
+      text = await res.text();
+      const parsed = JSON.parse(text);
+      const msg = parsed.message || parsed.error || JSON.stringify(parsed);
+      throw new Error(msg);
+    } catch (e) {
+      // If the body is not JSON, use raw text or fallback message
+      throw new Error(text || 'El resultado no es OK.');
+    }
+  }
 
   if (options.json) {
     if (!res.headers.get('Content-Type')?.startsWith('application/json')) {

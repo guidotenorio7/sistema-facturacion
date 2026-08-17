@@ -9,7 +9,7 @@ export default function UserForm({ initialData, onSubmit, onCancel, loading = fa
     fullName: '',
     email: '',
     password: '',
-    roles: ['user'],
+    roles: ['usuario'],
   });
 
   useEffect(() => {
@@ -19,7 +19,7 @@ export default function UserForm({ initialData, onSubmit, onCancel, loading = fa
         fullName: initialData.fullName || '',
         email: initialData.email || '',
         password: '', // No pre-fill password on edit
-        roles: initialData.roles || ['user'],
+        roles: initialData.roles || ['usuario'],
       });
     }
   }, [initialData]);
@@ -112,7 +112,7 @@ export default function UserForm({ initialData, onSubmit, onCancel, loading = fa
           <View style={styles.rolesSection}>
             <Text style={styles.rolesLabel}>Roles:</Text>
             <View style={styles.rolesContainer}>
-              {['admin', 'user', 'operador'].map(role => (
+              {['admin', 'usuario', 'operador'].map(role => (
                 <Pressable
                   key={role}
                   style={[

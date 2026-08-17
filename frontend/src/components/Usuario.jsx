@@ -14,6 +14,11 @@ export default function Usuario() {
   const navigate = useNavigate();
 
   useEffect(() => {
+    if (!uuid) {
+      setData({});
+      return;
+    }
+
     userService.get({ uuid })
       .then(data => setData(data[0] || {}));
   }, [uuid]);
@@ -42,7 +47,7 @@ export default function Usuario() {
   }
 
   return <Form
-      title="Editar usuario"
+      title={uuid ? 'Editar usuario' : 'Crear usuario'}
       onSubmit={submit}
     >
       <TextField
@@ -75,6 +80,7 @@ export default function Usuario() {
         options={[
           { value: 'admin', label: 'Administrador' },
           { value: 'operador', label: 'Operador' },
+          { value: 'usuario', label: 'Usuario' },
         ]}
         value={data.roles || []}
         onChange={value => setData({ ...data, roles: value })}

@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { createInvoice, deleteInvoice, listInvoices, downloadInvoicePdf } from '../services/facturacionService.js';
 import { useSnackbar } from './Snackbar.jsx';
 
+const emptyItem = () => ({ description: '', unitPrice: '', quantity: '1' });
+
 const initialForm = {
   seriesNumber: '',
   issueDate: '',
@@ -11,9 +13,8 @@ const initialForm = {
   receiverName: '',
   receiverTaxId: '',
   description: '',
-  unitCost: '',
-  quantity: '1',
   taxPercent: '',
+  items: [emptyItem()],
 };
 
 export default function Facturas() {
@@ -37,29 +38,74 @@ export default function Facturas() {
     loadFacturas();
   }, []);
 
+  function updateItem(index, field, value) {
+    setForm((currentForm) => ({
+      ...currentForm,
+      items: currentForm.items.map((item, itemIndex) => (
+        itemIndex === index ? { ...item, [field]: value } : item
+      )),
+    }));
+  }
+
+  function addItem() {
+    setForm((currentForm) => ({
+      ...currentForm,
+      items: [...currentForm.items, emptyItem()],
+    }));
+  }
+
+  function removeItem(index) {
+    setForm((currentForm) => {
+      if (currentForm.items.length === 1) {
+        return { ...currentForm, items: [emptyItem()] };
+      }
+
+      return {
+        ...currentForm,
+        items: currentForm.items.filter((_, itemIndex) => itemIndex !== index),
+      };
+    });
+  }
+
+  const invoiceItems = form.items
+    .map((item) => ({
+      description: item.description.trim(),
+      quantity: parseInt(item.quantity, 10) || 0,
+      unitPrice: parseFloat(item.unitPrice) || 0,
+    }))
+    .filter((item) => item.description || item.quantity > 0 || item.unitPrice > 0);
+
+  const subtotal = invoiceItems.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
+  const taxPercent = parseFloat(form.taxPercent) || 0;
+  const taxAmount = taxPercent > 0 ? parseFloat(((subtotal * taxPercent) / 100).toFixed(2)) : 0;
+  const total = parseFloat((subtotal + taxAmount).toFixed(2));
+
   async function handleSubmit(event) {
     event.preventDefault();
-    if (!form.description.trim() || !form.unitCost) {
-      snackbar.enqueue('Completa detalle, costo unitario y cantidad', { variant: 'error' });
+
+    if (invoiceItems.length === 0 || invoiceItems.some((item) => !item.description.trim() || item.unitPrice <= 0)) {
+      snackbar.enqueue('Completa el detalle y el precio unitario de cada producto', { variant: 'error' });
       return;
     }
 
     setLoading(true);
     try {
-      const unitCost = parseFloat(form.unitCost) || 0;
-      const quantity = parseInt(form.quantity, 10) || 1;
-      const subtotal = parseFloat((unitCost * quantity).toFixed(2));
-      const taxPercent = parseFloat(form.taxPercent) || 0;
-      const taxAmount = taxPercent > 0 ? parseFloat(((subtotal * taxPercent) / 100).toFixed(2)) : 0;
-      const total = parseFloat((subtotal + taxAmount).toFixed(2));
+      const normalizedItems = invoiceItems.map((item) => ({
+        description: item.description,
+        quantity: item.quantity || 1,
+        unitPrice: item.unitPrice,
+        subtotal: parseFloat(((item.quantity || 1) * item.unitPrice).toFixed(2)),
+      }));
+
+      const invoiceDescription = form.description.trim() || normalizedItems.map((item) => item.description).join(', ');
 
       await createInvoice({
         seriesNumber: form.seriesNumber || undefined,
         issueDate: form.issueDate || undefined,
         issuer: { name: form.issuerName || undefined, taxId: form.issuerTaxId || undefined },
         receiver: { name: form.receiverName || undefined, taxId: form.receiverTaxId || undefined },
-        description: form.description,
-        items: [{ description: form.description, quantity, unitPrice: unitCost, subtotal }],
+        description: invoiceDescription,
+        items: normalizedItems,
         taxableBase: subtotal,
         taxes: taxAmount > 0 ? [{ name: 'IVA', rate: taxPercent, amount: taxAmount }] : [],
         amount: total,
@@ -121,11 +167,6 @@ export default function Facturas() {
           onChange={(event) => setForm({ ...form, issuerTaxId: event.target.value })}
         />
         <input
-          placeholder="Detalle"
-          value={form.description}
-          onChange={(event) => setForm({ ...form, description: event.target.value })}
-        />
-        <input
           placeholder="Nombre receptor"
           value={form.receiverName}
           onChange={(event) => setForm({ ...form, receiverName: event.target.value })}
@@ -135,24 +176,59 @@ export default function Facturas() {
           value={form.receiverTaxId}
           onChange={(event) => setForm({ ...form, receiverTaxId: event.target.value })}
         />
-        <input
-          type="number"
-          placeholder="Costo unitario"
-          value={form.unitCost}
-          onChange={(event) => setForm({ ...form, unitCost: event.target.value })}
-        />
-        <input
-          type="number"
-          placeholder="Cantidad"
-          value={form.quantity}
-          onChange={(event) => setForm({ ...form, quantity: event.target.value })}
-        />
+
+        <div style={{ display: 'grid', gap: '0.75rem', marginBottom: '1rem' }}>
+          {form.items.map((item, index) => (
+            <div key={`item-${index}`} style={{ display: 'grid', gridTemplateColumns: '1.8fr 1fr 0.8fr auto', gap: '0.5rem', alignItems: 'center' }}>
+              <input
+                placeholder="Detalle"
+                value={item.description}
+                onChange={(event) => updateItem(index, 'description', event.target.value)}
+              />
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="Precio unitario"
+                value={item.unitPrice}
+                onChange={(event) => updateItem(index, 'unitPrice', event.target.value)}
+              />
+              <input
+                type="number"
+                min="1"
+                placeholder="Cant."
+                value={item.quantity}
+                onChange={(event) => updateItem(index, 'quantity', event.target.value)}
+              />
+              {form.items.length > 1 && (
+                <button type="button" className="danger-button" onClick={() => removeItem(index)}>
+                  Quitar
+                </button>
+              )}
+            </div>
+          ))}
+          <button type="button" className="button" onClick={addItem}>
+            Agregar otro producto
+          </button>
+        </div>
+
         <input
           type="number"
           placeholder="Porcentaje impuesto (ej: 21)"
           value={form.taxPercent}
           onChange={(event) => setForm({ ...form, taxPercent: event.target.value })}
         />
+
+        <div style={{ margin: '0.75rem 0' }}>
+          <strong>Subtotal:</strong> ${subtotal.toFixed(2)}
+        </div>
+        <div style={{ margin: '0.75rem 0' }}>
+          <strong>Impuesto:</strong> ${taxAmount.toFixed(2)}
+        </div>
+        <div style={{ margin: '0.75rem 0', fontSize: '1.1rem' }}>
+          <strong>Total:</strong> ${total.toFixed(2)}
+        </div>
+
         <button className="button" type="submit" disabled={loading}>
           {loading ? 'Creando…' : 'Crear factura'}
         </button>
@@ -167,34 +243,44 @@ export default function Facturas() {
             </div>
           </div>
         ) : (
-          facturas.map((factura) => (
-            <div className="home-summary-row" key={factura.uuid}>
-              <div>
-                <strong>{factura.seriesNumber || factura.invoiceNumber || factura.uuid}</strong>
-                <p>Qty: {factura.quantity || 1} • ${Number((factura.taxableBase || 0)).toFixed(2)} c/u</p>
-                <small>{factura.description}</small>
-              </div>
-              <div className="home-summary-meta">
-                <span>${Number(factura.amount || 0).toFixed(2)}</span>
-                <small>{factura.status || 'pending'}</small>
-                <div style={{display: 'flex', gap: '0.5rem'}}>
-                  <button className="button" type="button" onClick={async () => {
-                    try {
-                      await downloadInvoicePdf(factura.uuid);
-                      snackbar.enqueue('Descarga iniciada', { variant: 'success' });
-                    } catch (err) {
-                      snackbar.enqueue('No se pudo descargar el PDF', { variant: 'error' });
-                    }
-                  }}>
-                    Descargar
-                  </button>
-                  <button className="danger-button" type="button" onClick={() => handleDelete(factura.uuid)}>
-                    Eliminar
-                  </button>
+          facturas.map((factura) => {
+            const items = Array.isArray(factura.items) && factura.items.length > 0
+              ? factura.items
+              : [{ description: factura.description || 'Factura', quantity: factura.quantity || 1, unitPrice: factura.taxableBase || factura.amount || 0 }];
+
+            const itemSummary = items
+              .map((item) => `${item.description || 'Producto'} • $${Number(item.unitPrice || 0).toFixed(2)} x ${Number(item.quantity || 1)}`)
+              .join(' | ');
+
+            return (
+              <div className="home-summary-row" key={factura.uuid}>
+                <div>
+                  <strong>{factura.seriesNumber || factura.invoiceNumber || factura.uuid}</strong>
+                  <p>{itemSummary}</p>
+                  <small>{factura.description}</small>
+                </div>
+                <div className="home-summary-meta">
+                  <span>${Number(factura.amount || 0).toFixed(2)}</span>
+                  <small>{factura.status || 'pending'}</small>
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <button className="button" type="button" onClick={async () => {
+                      try {
+                        await downloadInvoicePdf(factura.uuid);
+                        snackbar.enqueue('Descarga iniciada', { variant: 'success' });
+                      } catch (err) {
+                        snackbar.enqueue('No se pudo descargar el PDF', { variant: 'error' });
+                      }
+                    }}>
+                      Descargar
+                    </button>
+                    <button className="danger-button" type="button" onClick={() => handleDelete(factura.uuid)}>
+                      Eliminar
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))
+            );
+          })
         )}
       </section>
     </div>

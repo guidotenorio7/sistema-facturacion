@@ -1,7 +1,7 @@
 export default function MultiSelectField({
   label,
   name,
-  value,
+  value = [],
   onChange,
   options,
 }) {
@@ -21,12 +21,13 @@ export default function MultiSelectField({
           <input
             type="checkbox"
             name={name}
-            checked={value?.includes(option.value)}
+            checked={(value || []).includes(option.value)}
             onChange={e => {
               const checked = e.target.checked;
+              const currentValue = Array.isArray(value) ? value : [];
               const newValue = checked
-                ? [...value, option.value]
-                : value.filter(v => v !== option.value);
+                ? [...currentValue, option.value]
+                : currentValue.filter(v => v !== option.value);
               onChange(newValue);
             }}
           />

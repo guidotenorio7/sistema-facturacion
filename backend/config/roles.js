@@ -72,14 +72,20 @@ export const ROLE_DESCRIPTIONS = {
  * @returns {boolean} True si tiene permiso
  */
 export function normalizeRole(role) {
-  if (role === 'operator') return 'operador';
-  return role;
+  if (!role) return role;
+
+  const normalized = String(role).trim();
+  if (normalized === 'operator' || normalized === 'operador') return 'operador';
+  if (normalized === 'user' || normalized === 'usuario') return 'usuario';
+  if (normalized === 'admin') return 'admin';
+
+  return normalized;
 }
 
 export function normalizeRoles(userRoles) {
   if (!userRoles) return [];
   const roles = Array.isArray(userRoles) ? userRoles : [userRoles];
-  return roles.map(normalizeRole);
+  return roles.map(normalizeRole).filter(Boolean);
 }
 
 export function hasPermission(userRoles, permission) {
