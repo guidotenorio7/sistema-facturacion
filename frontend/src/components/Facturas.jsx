@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { createInvoice, deleteInvoice, listInvoices, downloadInvoicePdf } from '../services/facturacionService.js';
+import { createInvoice, deleteInvoice, listInvoices, updateInvoiceStatus, downloadInvoicePdf } from '../services/facturacionService.js';
 import { useSnackbar } from './Snackbar.jsx';
 
 const emptyItem = () => ({ description: '', unitPrice: '', quantity: '1' });
@@ -21,6 +21,7 @@ export default function Facturas() {
   const [facturas, setFacturas] = useState([]);
   const [form, setForm] = useState(initialForm);
   const [loading, setLoading] = useState(false);
+  const [showCompleted, setShowCompleted] = useState(false);
   const snackbar = useSnackbar();
 
   async function loadFacturas() {
@@ -29,7 +30,7 @@ export default function Facturas() {
       if (result.success) {
         setFacturas(result.data || []);
       }
-    } catch (error) {
+    } catch {
       snackbar.enqueue('No se pudieron cargar las facturas', { variant: 'error' });
     }
   }
@@ -125,10 +126,23 @@ export default function Facturas() {
       await deleteInvoice(uuid);
       snackbar.enqueue('Factura eliminada', { variant: 'success' });
       await loadFacturas();
-    } catch (error) {
+    } catch {
       snackbar.enqueue('No se pudo eliminar la factura', { variant: 'error' });
     }
   }
+
+  async function handleStatusChange(factura) {
+    const nextStatus = factura.status === 'completed' ? 'pending' : 'completed';
+    try {
+      await updateInvoiceStatus(factura.uuid, nextStatus);
+      snackbar.enqueue(nextStatus === 'completed' ? 'Factura marcada como revisada' : 'Factura pendiente restaurada', { variant: 'success' });
+      await loadFacturas();
+    } catch (error) {
+      snackbar.enqueue(error.message || 'No se pudo actualizar la factura', { variant: 'error' });
+    }
+  }
+
+  const visibleFacturas = facturas.filter((factura) => showCompleted || factura.status !== 'completed');
 
   return (
     <div className="home-shell animate-content">
@@ -136,7 +150,7 @@ export default function Facturas() {
         <div>
           <p className="home-eyebrow">Facturación</p>
           <h2>Gestiona tus facturas</h2>
-          <p>Las facturas se cargan desde la base de datos y puedes crear o eliminar registros.</p>
+          <p>Organiza tus comprobantes, revisa los pendientes y conserva todo tu historial.</p>
         </div>
         <Link className="button" to="/">
           Volver al inicio
@@ -235,15 +249,25 @@ export default function Facturas() {
       </form>
 
       <section className="home-summary">
-        {facturas.length === 0 ? (
+        <div className="invoice-list-header">
+          <div>
+            <h3>Comprobantes</h3>
+            <p>Marca como revisada una factura para retirarla de pendientes.</p>
+          </div>
+          <label className="check-control">
+            <input type="checkbox" checked={showCompleted} onChange={(event) => setShowCompleted(event.target.checked)} />
+            Mostrar revisadas
+          </label>
+        </div>
+        {visibleFacturas.length === 0 ? (
           <div className="home-summary-row">
             <div>
-              <strong>No hay facturas</strong>
-              <p>Aún no hay comprobantes registrados en la base de datos.</p>
+              <strong>{facturas.length ? 'Todo al día' : 'No hay facturas'}</strong>
+              <p>{facturas.length ? 'No tienes comprobantes pendientes de revisar.' : 'Aún no hay comprobantes registrados en la base de datos.'}</p>
             </div>
           </div>
         ) : (
-          facturas.map((factura) => {
+          visibleFacturas.map((factura) => {
             const items = Array.isArray(factura.items) && factura.items.length > 0
               ? factura.items
               : [{ description: factura.description || 'Factura', quantity: factura.quantity || 1, unitPrice: factura.taxableBase || factura.amount || 0 }];
@@ -261,13 +285,16 @@ export default function Facturas() {
                 </div>
                 <div className="home-summary-meta">
                   <span>${Number(factura.amount || 0).toFixed(2)}</span>
-                  <small>{factura.status || 'pending'}</small>
+                  <small className={factura.status === 'completed' ? 'status-completed' : ''}>{factura.status === 'completed' ? 'Revisada' : (factura.status || 'Pendiente')}</small>
                   <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <button className="check-button" type="button" onClick={() => handleStatusChange(factura)} aria-label={factura.status === 'completed' ? 'Restaurar factura pendiente' : 'Marcar factura como revisada'}>
+                      {factura.status === 'completed' ? '↩ Restaurar' : '✓ Revisada'}
+                    </button>
                     <button className="button" type="button" onClick={async () => {
                       try {
                         await downloadInvoicePdf(factura.uuid);
                         snackbar.enqueue('Descarga iniciada', { variant: 'success' });
-                      } catch (err) {
+                      } catch {
                         snackbar.enqueue('No se pudo descargar el PDF', { variant: 'error' });
                       }
                     }}>

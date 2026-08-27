@@ -30,6 +30,7 @@ export const PERMISSIONS = {
   'invoice.create': ['admin', 'operador'],
   'invoice.list': ['admin', 'operador', 'usuario'],
   'invoice.view': ['admin', 'operador', 'usuario'],
+  'invoice.update': ['admin', 'operador', 'usuario'],
   'invoice.delete': ['admin', 'operador'],
   'invoice.export': ['admin', 'operador', 'usuario'],
 

@@ -1,4 +1,4 @@
-import { getJson, postJson, deleteItem, headers as apiHeaders } from '../libs/api.js';
+import { getJson, postJson, patch, deleteItem, headers as apiHeaders } from '../libs/api.js';
 
 export async function listInvoices() {
   const response = await getJson('/facturacion');
@@ -29,6 +29,11 @@ export async function deleteInvoice(uuid) {
   return { success: true };
 }
 
+export async function updateInvoiceStatus(uuid, status) {
+  const response = await patch(`/facturacion/${uuid}/status`, { status }, { json: true });
+  return response?.data || response;
+}
+
 export async function downloadInvoicePdf(uuid) {
   const authHeader = apiHeaders.Authorization || (() => {
     try {
@@ -36,7 +41,7 @@ export async function downloadInvoicePdf(uuid) {
       if (!s) return null;
       const parsed = JSON.parse(s);
       return parsed.token ? `Bearer ${parsed.token}` : null;
-    } catch (e) { return null; }
+    } catch { return null; }
   })();
 
   const response = await fetch(`/api/facturacion/${uuid}/pdf`, {

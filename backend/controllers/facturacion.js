@@ -285,6 +285,46 @@ export class FacturacionController {
     }
   }
 
+  static async updateInvoiceStatus(req, res) {
+    try {
+      const { uuid } = req.params;
+      const { status } = req.body || {};
+      const allowedStatuses = ['pending', 'completed'];
+
+      if (!uuid || !allowedStatuses.includes(status)) {
+        return res.status(400).json({ error: 'Estado de factura inválido' });
+      }
+
+      const InvoiceModel = getDependency('InvoiceModel');
+      const invoice = await InvoiceModel.findOne({ uuid });
+
+      if (!invoice) {
+        return res.status(404).json({ error: 'Factura no encontrada' });
+      }
+
+      const username = req.session?.username;
+      const userRoles = req.session?.roles || [];
+      const isAdmin = Array.isArray(userRoles) && userRoles.includes('admin');
+      if (!isAdmin && invoice.createdBy !== username) {
+        return res.status(403).json({ error: 'No puede actualizar esta factura' });
+      }
+
+      invoice.status = status;
+      invoice.updatedAt = new Date();
+      await invoice.save();
+
+      return res.status(200).json({
+        success: true,
+        data: { uuid: invoice.uuid, status: invoice.status },
+      });
+    } catch (error) {
+      console.error('FacturacionController.updateInvoiceStatus:', error);
+      return res.status(error.statusCode || 400).json({
+        error: error.message || 'Error al actualizar factura',
+      });
+    }
+  }
+
   static async listInvoices(req, res) {
     try {
       // Extraer usuario del JWT

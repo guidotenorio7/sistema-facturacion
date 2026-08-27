@@ -1,5 +1,4 @@
 import express from 'express';
-import { controllers } from '../controllers/controllers.js';
 import { errorHandlerMiddleware } from './error_handler_middleware.js';
 import { logMiddleware } from './log_middleware.js';
 import { authorizationMiddleware } from './authorization_middleware.js';
@@ -13,9 +12,6 @@ export default function configureMiddlewares(router) {
   if (config.cors) {
     router.use(corsMiddleware);
   }
-  
-  controllers(router);
-  
   router.use(errorHandlerMiddleware);
 }
 

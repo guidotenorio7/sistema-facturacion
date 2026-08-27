@@ -16,6 +16,13 @@ export function facturacion(app) {
     FacturacionController.getInvoiceStatus
   );
 
+  // Marcar una factura como revisada sin eliminarla
+  app.patch(
+    '/facturacion/:uuid/status',
+    checkForPermission('invoice.update'),
+    FacturacionController.updateInvoiceStatus
+  );
+
   // Listar facturas del usuario (usuario, operador, admin)
   app.get(
     '/facturacion',

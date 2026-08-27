@@ -10,7 +10,7 @@ const shortcuts = [
 
 export default function Home() {
   const session = useSession();
-  const [stats, setStats] = useState({ total: 0, pending: 0, amount: 0, recent: [] });
+  const [stats, setStats] = useState({ total: 0, pending: 0, verified: 0, amount: 0, recent: [] });
 
   useEffect(() => {
     let mounted = true;
@@ -21,10 +21,11 @@ export default function Home() {
         const items = res.data || [];
         const total = items.length;
         const pending = items.filter(i => i.status === 'pending').length;
+        const verified = items.filter(i => i.status === 'completed').length;
         const amount = items.reduce((s, it) => s + (parseFloat(it.amount) || 0), 0);
         const recent = items.slice(0, 5);
-        setStats({ total, pending, amount, recent });
-      } catch (e) {
+        setStats({ total, pending, verified, amount, recent });
+      } catch {
         // ignore
       }
     }
@@ -34,13 +35,13 @@ export default function Home() {
 
   return (
     <div className="home-shell animate-content">
-      <section className="home-hero">
+      <section className="home-hero home-hero-main">
         <div>
           <p className="home-eyebrow">Panel principal</p>
-          <h2>Hola, {session.user?.fullName || 'usuario'} 👋</h2>
-          <p>Tu espacio de facturación y administración listo para trabajar desde cualquier dispositivo.</p>
+          <h2>Hola, {session.user?.fullName || 'usuario'}</h2>
+          <p>Tu jornada de facturación, más clara y bajo control.</p>
         </div>
-        <div className="home-hero-badge">Movil • Rápido • Claro</div>
+        <div className="home-hero-badge">Panel de control</div>
       </section>
 
       <section className="home-grid">
@@ -52,6 +53,10 @@ export default function Home() {
           <div className="stat-card">
             <strong>{stats.pending}</strong>
             <small>Pendientes</small>
+          </div>
+          <div className="stat-card verified-card">
+            <strong>{stats.verified}</strong>
+            <small>Verificadas</small>
           </div>
           <div className="stat-card">
             <strong>${Number(stats.amount || 0).toFixed(2)}</strong>

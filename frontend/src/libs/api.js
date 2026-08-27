@@ -48,7 +48,7 @@ export async function fetchApi(service, options) {
       const parsed = JSON.parse(text);
       const msg = parsed.message || parsed.error || JSON.stringify(parsed);
       throw new Error(msg);
-    } catch (e) {
+    } catch {
       // If the body is not JSON, use raw text or fallback message
       throw new Error(text || 'El resultado no es OK.');
     }

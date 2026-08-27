@@ -112,9 +112,9 @@ const invoiceSchema = new mongoose.Schema({
     required: true,
   },
   status: {
-    // pending, sent, accepted, rejected
+    // pending, sent, accepted, rejected, completed (revisada por el usuario)
     type: String,
-    enum: ['pending', 'sent', 'accepted', 'rejected'],
+    enum: ['pending', 'sent', 'accepted', 'rejected', 'completed'],
     default: 'pending',
   },
   cae: String,
