@@ -25,14 +25,14 @@ export const PERMISSIONS = {
   // Gestión de Facturas
   // Política:
   // - admin: todos los permisos
-  // - operador: puede crear y eliminar facturas; puede también ver/listar
-  // - usuario: solo ver/listar facturas
+  // - operador: puede crear, ver y organizar todas las facturas
+  // - usuario: puede ver/listar todas las facturas, sin acciones
   'invoice.create': ['admin', 'operador'],
   'invoice.list': ['admin', 'operador', 'usuario'],
   'invoice.view': ['admin', 'operador', 'usuario'],
-  'invoice.update': ['admin', 'operador', 'usuario'],
+  'invoice.update': ['admin', 'operador'],
   'invoice.delete': ['admin', 'operador'],
-  'invoice.export': ['admin', 'operador', 'usuario'],
+  'invoice.export': ['admin', 'operador'],
 
   // Reporting
   'report.view': ['admin', 'operador'],
@@ -54,7 +54,7 @@ export const ROLE_DESCRIPTIONS = {
   },
   operador: {
     name: 'Operador',
-    description: 'Puede crear y eliminar facturas; puede ver/listar facturas propias',
+    description: 'Puede crear, eliminar y organizar todas las facturas',
     color: '#f57c00',
     icon: '👨‍💻',
   },

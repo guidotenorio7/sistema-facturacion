@@ -14,9 +14,9 @@ export default function Router() {
     <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/facturas" element={<Facturas />} />
-      <Route path="/usuarios" element={<Usuarios />} />
       {session.user?.roles?.includes('admin') && (
         <>
+          <Route path="/usuarios" element={<Usuarios />} />
           <Route path="/usuario" element={<Usuario />} />
           <Route path="/usuario/:uuid" element={<Usuario />} />
         </>

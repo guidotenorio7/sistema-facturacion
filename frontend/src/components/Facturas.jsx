@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { createInvoice, deleteInvoice, listInvoices, updateInvoiceStatus, downloadInvoicePdf } from '../services/facturacionService.js';
 import { useSnackbar } from './Snackbar.jsx';
+import useSession from './Session.jsx';
 
 const emptyItem = () => ({ description: '', unitPrice: '', quantity: '1' });
 
@@ -23,6 +24,8 @@ export default function Facturas() {
   const [loading, setLoading] = useState(false);
   const [showCompleted, setShowCompleted] = useState(false);
   const snackbar = useSnackbar();
+  const session = useSession();
+  const canManageInvoices = session.user?.roles?.some(role => ['admin', 'operador'].includes(role));
 
   async function loadFacturas() {
     try {
@@ -142,7 +145,9 @@ export default function Facturas() {
     }
   }
 
-  const visibleFacturas = facturas.filter((factura) => showCompleted || factura.status !== 'completed');
+  const visibleFacturas = canManageInvoices
+    ? facturas.filter((factura) => showCompleted || factura.status !== 'completed')
+    : facturas;
 
   return (
     <div className="home-shell animate-content">
@@ -157,7 +162,7 @@ export default function Facturas() {
         </Link>
       </section>
 
-      <form className="invoice-form" onSubmit={handleSubmit}>
+      {canManageInvoices && <form className="invoice-form" onSubmit={handleSubmit}>
         <h3>Nueva factura</h3>
         <input
           placeholder="Serie y número (ej: F-001-000123)"
@@ -246,18 +251,18 @@ export default function Facturas() {
         <button className="button" type="submit" disabled={loading}>
           {loading ? 'Creando…' : 'Crear factura'}
         </button>
-      </form>
+      </form>}
 
       <section className="home-summary">
         <div className="invoice-list-header">
           <div>
             <h3>Comprobantes</h3>
-            <p>Marca como revisada una factura para retirarla de pendientes.</p>
+            <p>{canManageInvoices ? 'Marca como revisada una factura para retirarla de pendientes.' : 'Consulta las facturas disponibles.'}</p>
           </div>
-          <label className="check-control">
-            <input type="checkbox" checked={showCompleted} onChange={(event) => setShowCompleted(event.target.checked)} />
-            Mostrar revisadas
-          </label>
+          {canManageInvoices && <label className="check-control">
+              <input type="checkbox" checked={showCompleted} onChange={(event) => setShowCompleted(event.target.checked)} />
+              Mostrar revisadas
+            </label>}
         </div>
         {visibleFacturas.length === 0 ? (
           <div className="home-summary-row">
@@ -286,7 +291,7 @@ export default function Facturas() {
                 <div className="home-summary-meta">
                   <span>${Number(factura.amount || 0).toFixed(2)}</span>
                   <small className={factura.status === 'completed' ? 'status-completed' : ''}>{factura.status === 'completed' ? 'Revisada' : (factura.status || 'Pendiente')}</small>
-                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  {canManageInvoices && <div style={{ display: 'flex', gap: '0.5rem' }}>
                     <button className="check-button" type="button" onClick={() => handleStatusChange(factura)} aria-label={factura.status === 'completed' ? 'Restaurar factura pendiente' : 'Marcar factura como revisada'}>
                       {factura.status === 'completed' ? '↩ Restaurar' : '✓ Revisada'}
                     </button>
@@ -303,7 +308,7 @@ export default function Facturas() {
                     <button className="danger-button" type="button" onClick={() => handleDelete(factura.uuid)}>
                       Eliminar
                     </button>
-                  </div>
+                  </div>}
                 </div>
               </div>
             );

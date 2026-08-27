@@ -23,7 +23,7 @@ export function facturacion(app) {
     FacturacionController.updateInvoiceStatus
   );
 
-  // Listar facturas del usuario (usuario, operador, admin)
+  // Listar facturas según el alcance del rol
   app.get(
     '/facturacion',
     checkForPermission('invoice.list'),

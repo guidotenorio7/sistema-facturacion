@@ -304,8 +304,9 @@ export class FacturacionController {
 
       const username = req.session?.username;
       const userRoles = req.session?.roles || [];
-      const isAdmin = Array.isArray(userRoles) && userRoles.includes('admin');
-      if (!isAdmin && invoice.createdBy !== username) {
+      const canManageAllInvoices = Array.isArray(userRoles)
+        && userRoles.some(role => ['admin', 'operador'].includes(role));
+      if (!canManageAllInvoices && invoice.createdBy !== username) {
         return res.status(403).json({ error: 'No puede actualizar esta factura' });
       }
 
@@ -336,7 +337,7 @@ export class FacturacionController {
       const { status } = req.query;
       const InvoiceModel = getDependency('InvoiceModel');
 
-      const filters = { createdBy: username };
+      const filters = {};
       if (status) {
         filters.status = status;
       }
